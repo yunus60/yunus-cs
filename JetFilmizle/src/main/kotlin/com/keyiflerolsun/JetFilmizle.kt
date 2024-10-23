@@ -63,7 +63,7 @@ class JetFilmizle : MainAPI() {
         val document = app.get(url).document
 
         val title       = document.selectFirst("section.movie-exp div.movie-exp-title")?.text()?.substringBefore(" izle")?.trim() ?: return null
-        val poster      = fixUrlNull(document.selectFirst("section.movie-exp img")?.attr("data-src"))
+        val poster      = fixUrlNull(document.selectFirst("section.movie-exp img")?.attr("data-src")) ?: fixUrlNull(document.selectFirst("section.movie-exp img")?.attr("src"))
         val yearDiv     = document.selectXpath("//div[@class='yap' and contains(strong, 'Vizyon') or contains(strong, 'Yapım')]").text().trim()
         val year        = Regex("""(\d{4})""").find(yearDiv)?.groupValues?.get(1)?.toIntOrNull()
         val description = document.selectFirst("section.movie-exp p.aciklama")?.text()?.trim()
