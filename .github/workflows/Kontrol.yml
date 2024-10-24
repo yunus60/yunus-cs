@@ -65,8 +65,8 @@ jobs:
           BRANCH="domain-degisikligi"
 
           git checkout -b $BRANCH
-          git pull origin $BRANCH --rebase
-          git push origin $BRANCH
+          git pull origin $BRANCH --no-rebase
+          git push origin $BRANCH --force
 
           curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
