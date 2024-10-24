@@ -64,8 +64,7 @@ jobs:
             -m "🔄 Otomatik domain güncellemeleri yapıldı."
           BRANCH="domain-degisikligi"
 
-          git checkout -b $BRANCH
-          git pull origin $BRANCH --no-rebase --allow-unrelated-histories
+          git checkout -B $BRANCH
           git push origin $BRANCH --force
 
           curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
