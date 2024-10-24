@@ -39,14 +39,13 @@ class NetflixMirror : MainAPI() {
             "hd"       to "on"
         )
 
-        val allItems = mutableListOf<HomePageItem>()
-
-        for (endpoint in listOf("movies", "series")) {
-            val document = app.get("${mainUrl}/${endpoint}", cookies = cookies).document
-            val items    = document.select(".tray-container, #top10").map {
+        val allItems = listOf("movies", "series").flatMap { endpoint ->
+            app.get(
+                "${mainUrl}/${endpoint}",
+                cookies = cookies
+            ).document.select(".tray-container, #top10").map {
                 it.toHomePageList()
             }
-            allItems.addAll(items)
         }
 
         return HomePageResponse(allItems, false)
