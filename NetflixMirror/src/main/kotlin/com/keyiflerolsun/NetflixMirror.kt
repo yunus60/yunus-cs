@@ -78,8 +78,6 @@ class NetflixMirror : MainAPI() {
         val data = app.get(url, referer = "$mainUrl/", cookies = cookies).parsed<SearchData>()
 
         return data.searchResult.map {
-            Log.d("NTFX", "it.t » ${it.t}")
-            Log.d("NTFX", "it.id » ${it.id}")
             newMovieSearchResponse(it.t, Id(it.id).toJson()) {
                 posterUrl     = "https://img.nfmirrorcdn.top/poster/v/${it.id}.jpg"
                 posterHeaders = mapOf("Referer" to "$mainUrl/")
