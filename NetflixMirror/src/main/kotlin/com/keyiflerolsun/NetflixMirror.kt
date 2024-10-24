@@ -39,13 +39,17 @@ class NetflixMirror : MainAPI() {
             "hd"       to "on"
         )
 
-        val document = app.get("$mainUrl/home", cookies = cookies).document
+        val allItems = mutableListOf<HomePageItem>()
 
-        val items    = document.select(".tray-container, #top10").map {
-            it.toHomePageList()
+        for (endpoint in listOf("movies", "series")) {
+            val document = app.get("${mainUrl}/${endpoint}", cookies = cookies).document
+            val items    = document.select(".tray-container, #top10").map {
+                it.toHomePageList()
+            }
+            allItems.addAll(items)
         }
 
-        return HomePageResponse(items, false)
+        return HomePageResponse(allItems, false)
     }
 
     private fun Element.toHomePageList(): HomePageList {
@@ -63,7 +67,7 @@ class NetflixMirror : MainAPI() {
 
         return newMovieSearchResponse("", Id(id).toJson()) {
             this.posterUrl = posterUrl
-            posterHeaders  = mapOf("Referer" to "$mainUrl/")
+            posterHeaders  = mapOf("Referer" to "${mainUrl}/")
         }
     }
 
@@ -74,13 +78,13 @@ class NetflixMirror : MainAPI() {
             "hd"       to "on"
         )
 
-        val url  = "$mainUrl/search.php?s=$query&t=${APIHolder.unixTime}"
-        val data = app.get(url, referer = "$mainUrl/", cookies = cookies).parsed<SearchData>()
+        val url  = "${mainUrl}/search.php?s=${query}&t=${APIHolder.unixTime}"
+        val data = app.get(url, referer = "${mainUrl}/", cookies = cookies).parsed<SearchData>()
 
         return data.searchResult.map {
             newMovieSearchResponse(it.t, Id(it.id).toJson()) {
                 posterUrl     = "https://img.nfmirrorcdn.top/poster/v/${it.id}.jpg"
-                posterHeaders = mapOf("Referer" to "$mainUrl/")
+                posterHeaders = mapOf("Referer" to "${mainUrl}/")
             }
         }
     }
@@ -96,9 +100,9 @@ class NetflixMirror : MainAPI() {
         )
 
         val data = app.get(
-            "$mainUrl/post.php?id=$id&t=${APIHolder.unixTime}",
+            "${mainUrl}/post.php?id=${id}&t=${APIHolder.unixTime}",
             headers,
-            referer = "$mainUrl/",
+            referer = "${mainUrl}/",
             cookies = cookies
         ).parsed<PostData>()
 
@@ -136,9 +140,9 @@ class NetflixMirror : MainAPI() {
         val type = if (data.episodes.first() == null) TvType.Movie else TvType.TvSeries
 
         return newTvSeriesLoadResponse(title, url, type, episodes) {
-            posterUrl            = "https://img.nfmirrorcdn.top/poster/v/$id.jpg"
-            backgroundPosterUrl  = "https://img.nfmirrorcdn.top/poster/h/$id.jpg"
-            posterHeaders        = mapOf("Referer" to "$mainUrl/")
+            posterUrl            = "https://img.nfmirrorcdn.top/poster/v/${id}.jpg"
+            backgroundPosterUrl  = "https://img.nfmirrorcdn.top/poster/h/${id}.jpg"
+            posterHeaders        = mapOf("Referer" to "${mainUrl}/")
             plot                 = data.desc
             year                 = data.year.toIntOrNull()
             tags                 = genre
@@ -148,7 +152,7 @@ class NetflixMirror : MainAPI() {
             this.recommendations = data.suggest?.map {
                 newMovieSearchResponse("", Id(it.id).toJson()) {
                     posterUrl     = "https://img.nfmirrorcdn.top/poster/v/${it.id}.jpg"
-                    posterHeaders = mapOf("Referer" to "$mainUrl/")
+                    posterHeaders = mapOf("Referer" to "${mainUrl}/")
                 }
             }
         }
@@ -164,9 +168,9 @@ class NetflixMirror : MainAPI() {
 
         while (true) {
             val data = app.get(
-                "$mainUrl/episodes.php?s=$sid&series=$eid&t=${APIHolder.unixTime}&page=$pg",
+                "${mainUrl}/episodes.php?s=${sid}&series=${eid}&t=${APIHolder.unixTime}&page=${pg}",
                 headers,
-                referer = "$mainUrl/",
+                referer = "${mainUrl}/",
                 cookies = cookies
             ).parsed<EpisodesData>()
             data.episodes?.mapTo(episodes) {
@@ -195,9 +199,9 @@ class NetflixMirror : MainAPI() {
         )
 
         val playlist = app.get(
-            "$mainUrl/playlist.php?id=$id&t=$title&tm=${APIHolder.unixTime}",
+            "${mainUrl}/playlist.php?id=${id}&t=${title}&tm=${APIHolder.unixTime}",
             headers,
-            referer = "$mainUrl/",
+            referer = "${mainUrl}/",
             cookies = cookies
         ).parsed<PlayList>()
 
@@ -208,7 +212,7 @@ class NetflixMirror : MainAPI() {
                         name,
                         it.label,
                         fixUrl(it.file),
-                        "$mainUrl/",
+                        "${mainUrl}/",
                         getQualityFromName(it.file.substringAfter("q=", "")),
                         true
                     )
