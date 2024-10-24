@@ -61,7 +61,7 @@ class NetflixMirror : MainAPI() {
         val id        = selectFirst("a")?.attr("data-post") ?: attr("data-post") ?: return null
         val posterUrl = fixUrlNull(selectFirst(".card-img-container img, .top10-img img")?.attr("data-src"))
 
-        return newAnimeSearchResponse("", Id(id).toJson()) {
+        return newMovieSearchResponse("", Id(id).toJson()) {
             this.posterUrl = posterUrl
             posterHeaders  = mapOf("Referer" to "$mainUrl/")
         }
@@ -78,7 +78,7 @@ class NetflixMirror : MainAPI() {
         val data = app.get(url, referer = "$mainUrl/", cookies = cookies).parsed<SearchData>()
 
         return data.searchResult.map {
-            newAnimeSearchResponse(it.t, Id(it.id).toJson()) {
+            newMovieSearchResponse(it.t, Id(it.id).toJson()) {
                 posterUrl     = "https://img.nfmirrorcdn.top/poster/v/${it.id}.jpg"
                 posterHeaders = mapOf("Referer" to "$mainUrl/")
             }
