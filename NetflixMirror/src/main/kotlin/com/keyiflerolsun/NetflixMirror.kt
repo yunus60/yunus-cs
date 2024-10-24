@@ -2,11 +2,13 @@
 
 package com.keyiflerolsun
 
+import android.util.Log
+import org.jsoup.nodes.Element
+import com.lagradost.cloudstream3.*
 import com.keyiflerolsun.entities.EpisodesData
 import com.keyiflerolsun.entities.PlayList
 import com.keyiflerolsun.entities.PostData
 import com.keyiflerolsun.entities.SearchData
-import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
@@ -16,8 +18,6 @@ import com.lagradost.cloudstream3.utils.getQualityFromName
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Response
-import org.jsoup.nodes.Element
-import com.lagradost.cloudstream3.APIHolder.unixTime
 
 class NetflixMirror : MainAPI() {
     override var mainUrl              = "https://iosmirror.cc"
@@ -33,7 +33,7 @@ class NetflixMirror : MainAPI() {
     private val headers      = mapOf("X-Requested-With" to "XMLHttpRequest")
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        cookie_value = if(cookie_value.isEmpty()) bypass(mainUrl) else cookie_value
+        cookie_value = if(cookie_value.isEmpty()) bypassVerification(mainUrl) else cookie_value
         val cookies  = mapOf(
             "t_hash_t" to cookie_value,
             "hd"       to "on"
@@ -68,7 +68,7 @@ class NetflixMirror : MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-        cookie_value = if(cookie_value.isEmpty()) bypass(mainUrl) else cookie_value
+        cookie_value = if(cookie_value.isEmpty()) bypassVerification(mainUrl) else cookie_value
         val cookies  = mapOf(
             "t_hash_t" to cookie_value,
             "hd"       to "on"
@@ -88,7 +88,7 @@ class NetflixMirror : MainAPI() {
     override suspend fun quickSearch(query: String): List<SearchResponse> = search(query)
 
     override suspend fun load(url: String): LoadResponse? {
-        cookie_value = if(cookie_value.isEmpty()) bypass(mainUrl) else cookie_value
+        cookie_value = if(cookie_value.isEmpty()) bypassVerification(mainUrl) else cookie_value
         val id       = parseJson<Id>(url).id
         val cookies  = mapOf(
             "t_hash_t" to cookie_value,
@@ -181,6 +181,7 @@ class NetflixMirror : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
+        Log.d("NTFX", "data » ${data}")
         val (title, id) = parseJson<LoadData>(data)
         val cookies     = mapOf(
             "t_hash_t" to cookie_value,
