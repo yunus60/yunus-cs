@@ -78,6 +78,8 @@ class NetflixMirror : MainAPI() {
         val data = app.get(url, referer = "$mainUrl/", cookies = cookies).parsed<SearchData>()
 
         return data.searchResult.map {
+            Log.d("NTFX", "it.t » ${it.t}")
+            Log.d("NTFX", "it.id » ${it.id}")
             newMovieSearchResponse(it.t, Id(it.id).toJson()) {
                 posterUrl     = "https://img.nfmirrorcdn.top/poster/v/${it.id}.jpg"
                 posterHeaders = mapOf("Referer" to "$mainUrl/")
@@ -136,15 +138,21 @@ class NetflixMirror : MainAPI() {
         val type = if (data.episodes.first() == null) TvType.Movie else TvType.TvSeries
 
         return newTvSeriesLoadResponse(title, url, type, episodes) {
-            posterUrl           = "https://img.nfmirrorcdn.top/poster/v/$id.jpg"
-            backgroundPosterUrl = "https://img.nfmirrorcdn.top/poster/h/$id.jpg"
-            posterHeaders       = mapOf("Referer" to "$mainUrl/")
-            plot                = data.desc
-            year                = data.year.toIntOrNull()
-            tags                = genre
-            actors              = cast
-            this.rating         = rating
-            this.duration       = runTime
+            posterUrl            = "https://img.nfmirrorcdn.top/poster/v/$id.jpg"
+            backgroundPosterUrl  = "https://img.nfmirrorcdn.top/poster/h/$id.jpg"
+            posterHeaders        = mapOf("Referer" to "$mainUrl/")
+            plot                 = data.desc
+            year                 = data.year.toIntOrNull()
+            tags                 = genre
+            actors               = cast
+            this.rating          = rating
+            this.duration        = runTime
+            this.recommendations = data.suggest?.map {
+                newMovieSearchResponse("", Id(it.id).toJson()) {
+                    posterUrl     = "https://img.nfmirrorcdn.top/poster/v/${it.id}.jpg"
+                    posterHeaders = mapOf("Referer" to "$mainUrl/")
+                }
+            }
         }
     }
 
