@@ -87,6 +87,34 @@ class RecTV : MainAPI() {
     override suspend fun load(url: String): LoadResponse? {
         val veri = AppUtils.tryParseJson<RecItem>(url) ?: return null
 
+        if (veri.type == "serie") {
+            val diziReq  = app.get("${mainUrl}/api/season/by/serie/${veri.id}/${swKey}/")
+            val sezonlar = AppUtils.tryParseJson<List<RecDizi>>(diziReq.text) ?: return null
+
+            val episodeList = mutableListOf<Episode>()
+
+            for (sezon in sezonlar) {
+                for (bolum in sezon.episodes) {
+                    episodeList.add(Episode(
+                        data        = bolum.sources.first().url,
+                        name        = bolum.title,
+                        season      = sezon.title.substringBefore(".S").toIntOrNull() ?: 1,
+                        episode     = bolum.title.substringAfter("Bölüm ").toIntOrNull() ?: 1,
+                        description = sezon.title.substringAfter(".S "),
+                        posterUrl   = veri.image
+                    ))
+                }
+            }
+
+            return newTvSeriesLoadResponse(veri.title, url, TvType.TvSeries, episodeList) {
+                this.posterUrl = veri.image
+                this.plot      = veri.description
+                this.year      = veri.year
+                this.tags      = veri.genres?.map { it.title }
+                this.rating    = "${veri.rating}".toRatingInt()
+            }
+        }
+
         if (veri.label != "CANLI" && veri.label != "Canlı") {
             return newMovieLoadResponse(veri.title, url, TvType.Movie, url) {
                 this.posterUrl = veri.image
@@ -109,6 +137,26 @@ class RecTV : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
+        if (data.startsWith("http")) {
+            Log.d("RCTV", "data » ${data}")
+            callback.invoke(
+                ExtractorLink(
+                    source  = "${this.name}",
+                    name    = "${this.name}",
+                    url     = data,
+                    headers = mapOf(
+                        "User-Agent"      to "googleusercontent",
+                        "origin"          to "https://twitter.com",
+                        "Accept-Encoding" to "gzip",
+                    ),
+                    referer = "https://twitter.com/",
+                    quality = Qualities.Unknown.value,
+                    type    = INFER_TYPE
+                )
+            )
+            return true
+        }
+
         val veri = AppUtils.tryParseJson<RecItem>(data) ?: return false
 
         veri.sources.forEach { source ->
