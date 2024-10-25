@@ -82,9 +82,9 @@ class FilmModu : MainAPI() {
         val poster      = fixUrlNull(document.selectFirst("img.img-responsive")?.attr("src"))
         val description = document.selectFirst("p[itemprop='description']")?.text()?.trim()
         val year        = document.selectFirst("span[itemprop='dateCreated']")?.text()?.trim()?.toIntOrNull()
-        val tags        = document.select("a[href*='/hd-film-kategori/']").map { it.text() }
+        val tags        = document.select("div.description a[href*='-kategori/']").map { it.text() }
         val rating      = document.selectFirst("div.description p")?.ownText()?.split(" ")?.last()?.trim()?.toRatingInt()
-        val actors      = document.select("a[href*='/aktor/']").map { Actor(it!!.selectFirst("span")!!.text()) }
+        val actors      = document.select("div.description a[href*='-oyuncu-']").map { Actor(it!!.selectFirst("span")!!.text()) }
         val trailer     = document.selectFirst("div.container iframe")?.attr("src")
 
         return newMovieLoadResponse(title, url, TvType.Movie, url) {
