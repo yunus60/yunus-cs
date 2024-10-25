@@ -58,7 +58,10 @@ class HDFilmCehennemi : MainAPI() {
     override suspend fun quickSearch(query: String): List<SearchResponse> = search(query)
 
     override suspend fun search(query: String): List<SearchResponse> {
-        val response      = app.get("${mainUrl}/search?q=${query}").parsedSafe<Results>() ?: return emptyList()
+        val response      = app.get(
+            "${mainUrl}/search?q=${query}",
+            headers = mapOf("X-Requested-With" to "fetch")
+        ).parsedSafe<Results>() ?: return emptyList()
         val searchResults = mutableListOf<SearchResponse>()
 
         response.results.forEach { resultHtml ->
@@ -69,7 +72,7 @@ class HDFilmCehennemi : MainAPI() {
             val posterUrl = fixUrlNull(document.selectFirst("img")?.attr("src")) ?: fixUrlNull(document.selectFirst("img")?.attr("data-src"))
 
             searchResults.add(
-                newMovieSearchResponse(title, href, TvType.Movie) { this.posterUrl = posterUrl }
+                newMovieSearchResponse(title, href, TvType.Movie) { this.posterUrl = posterUrl?.replace("/thumb/", "/list/") }
             )
         }
 
