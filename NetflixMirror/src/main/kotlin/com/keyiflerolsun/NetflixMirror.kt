@@ -36,6 +36,7 @@ class NetflixMirror : MainAPI() {
         cookie_value = if(cookie_value.isEmpty()) bypassVerification(mainUrl) else cookie_value
         val cookies  = mapOf(
             "t_hash_t" to cookie_value,
+            "ott"      to "nf",
             "hd"       to "on"
         )
 

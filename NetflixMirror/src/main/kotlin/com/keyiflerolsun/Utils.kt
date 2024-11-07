@@ -75,7 +75,7 @@ fun convertRuntimeToMinutes(runtimeText: String): Int {
 suspend fun bypassVerification(mainUrl: String): String {
     val homePageDocument = httpClient.get("$mainUrl/home").document
     val addHash          = homePageDocument.selectFirst("body")?.attr("data-addhash") ?: ""
-    val verificationUrl  = "https://userverify.netmirror.app/verify?hash=${addHash}&t=${com.lagradost.cloudstream3.APIHolder.unixTime}"
+    val verificationUrl  = "${mainUrl}/v.php?hash=${addHash}&t=${com.lagradost.cloudstream3.APIHolder.unixTime}"
     httpClient.get(verificationUrl) // Verification request
 
     val requestBody = FormBody.Builder().add("verify", addHash).build()
