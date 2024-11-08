@@ -34,7 +34,7 @@ class IzleAI : MainAPI() {
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
         val document = app.get("${request.data}").document
-        val home     = document.select("div.results a").mapNotNull { it.toSearchResult() }
+        val home     = document.select("a.ambilight").mapNotNull { it.toSearchResult() }
 
         return newHomePageResponse(request.name, home)
     }
@@ -105,12 +105,12 @@ class IzleAI : MainAPI() {
         val document = app.get(url).document
 
         val title       = document.selectFirst("div.gap-3.pt-5 h2")?.text() ?: return null
-        val poster      = fixUrlNull(document.selectFirst("div.hidden.mb-4 img")?.attr("data-src"))
+        val poster      = fixUrlNull(document.selectFirst("div.col-span-2 img")?.attr("data-src"))
         val year        = document.selectFirst("a[href*='/yil/']").text()?.toIntOrNull()
         val description = document.selectFirst("div.mv-det-p")?.text()?.trim() ?: document.selectFirst("div.w-full div.text-base")?.text()?.trim()
         val tags        = document.select("[href*='kategori']").map { it.text() }
         val rating      = document.selectFirst("a[href*='imdb.com'] span.font-bold")?.text()?.trim().toRatingInt()
-        val duration    = document.selectXpath("//div[contains(text(), ' Dakika')]")?.text()?.trim()?.split(" ")?.first()?.toIntOrNull()
+        val duration    = document.selectXpath("//span[contains(text(), ' dk.')]")?.text()?.trim()?.split(" ")?.first()?.toIntOrNull()
         val trailer     = document.selectFirst("iframe[data-src*='youtube.com/embed/']")?.attr("data-src")
         val actors      = document.select("div.flex.overflow-auto [href*='oyuncu']").map {
             Actor(it.selectFirst("span span")!!.text(), it.selectFirst("img")?.attr("data-srcset")?.split(" ")?.first())
