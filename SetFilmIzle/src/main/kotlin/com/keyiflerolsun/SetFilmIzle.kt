@@ -54,7 +54,7 @@ class SetFilmIzle : MainAPI() {
     }
 
     private fun Element.toMainPageResult(): SearchResponse? {
-        val title     = this.selectFirst("div.flbaslik")?.text() ?: return null
+        val title     = this.selectFirst("h2.flbaslik")?.text() ?: return null
         val href      = fixUrlNull(this.selectFirst("a")?.attr("href")) ?: return null
         val posterUrl = fixUrlNull(this.selectFirst("img")?.attr("data-src"))
 
