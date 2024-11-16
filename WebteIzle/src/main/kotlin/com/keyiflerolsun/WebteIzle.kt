@@ -71,7 +71,7 @@ class WebteIzle : MainAPI() {
 
     override suspend fun search(query: String): List<SearchResponse> {
         val query    = java.net.URLEncoder.encode(query, "ISO-8859-9")
-        val document = app.post("${mainUrl}/filtre?a=${query}").document
+        val document = app.get("${mainUrl}/filtre?a=${query}").document
 
         return document.select("div.golgever").mapNotNull { it.toSearchResult() }
     }
