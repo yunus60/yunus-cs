@@ -17,7 +17,7 @@ open class SetPlay : ExtractorApi() {
 
         val videoUrl    = Regex("""videoUrl\":\"([^\",\"]+)""").find(iSource)?.groupValues?.get(1) ?: throw ErrorLoadingException("videoUrl not found")
         val videoServer = Regex("""videoServer\":\"([^\",\"]+)""").find(iSource)?.groupValues?.get(1) ?: throw ErrorLoadingException("videoServer not found")
-        val title       = if (partKey != "") partKey else Regex("""title\":\"([^\",\"]+)""").find(iSource)?.groupValues?.get(1)?.split(".")?.last()
+        val title       = Regex("""title\":\"([^\",\"]+)""").find(iSource)?.groupValues?.get(1) ?: "Unknown"
         val m3uLink     = "${mainUrl}${videoUrl.replace("\\", "")}?s=${videoServer}"
         Log.d("Kekik_${this.name}", "m3uLink » ${m3uLink}")
 
