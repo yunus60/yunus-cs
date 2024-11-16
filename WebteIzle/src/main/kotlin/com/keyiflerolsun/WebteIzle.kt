@@ -10,6 +10,12 @@ import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 import com.lagradost.cloudstream3.LoadResponse.Companion.addActors
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.lagradost.cloudstream3.network.CloudflareKiller
+import okhttp3.Interceptor
+import okhttp3.Response
+import org.jsoup.Jsoup
+import java.net.URLDecoder
+import java.util.Base64
 
 class WebteIzle : MainAPI() {
     override var mainUrl              = "https://webteizle.info"
@@ -20,6 +26,29 @@ class WebteIzle : MainAPI() {
     override val hasChromecastSupport = true
     override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Movie)
+
+    // ! CloudFlare bypass
+    override var sequentialMainPage = true        // * https://recloudstream.github.io/dokka/-cloudstream/com.lagradost.cloudstream3/-main-a-p-i/index.html#-2049735995%2FProperties%2F101969414
+    override var sequentialMainPageDelay       = 50L  // ? 0.05 saniye
+    override var sequentialMainPageScrollDelay = 50L  // ? 0.05 saniye
+
+    // ! CloudFlare v2
+    private val cloudflareKiller by lazy { CloudflareKiller() }
+    private val interceptor      by lazy { CloudflareInterceptor(cloudflareKiller) }
+
+    class CloudflareInterceptor(private val cloudflareKiller: CloudflareKiller): Interceptor {
+        override fun intercept(chain: Interceptor.Chain): Response {
+            val request  = chain.request()
+            val response = chain.proceed(request)
+            val doc      = Jsoup.parse(response.peekBody(1024 * 1024).string())
+
+            if (doc.text().contains("Just a moment")) {
+                return cloudflareKiller.intercept(chain)
+            }
+
+            return response
+        }
+    }
 
     override val mainPage = mainPageOf(
         "${mainUrl}/film-izle/"                    to "Güncel",
@@ -71,7 +100,11 @@ class WebteIzle : MainAPI() {
 
     override suspend fun search(query: String): List<SearchResponse> {
         val query    = java.net.URLEncoder.encode(query, "ISO-8859-9")
-        val document = app.get("${mainUrl}/filtre?a=${query}").document
+        val document = app.get(
+            "${mainUrl}/filtre?a=${query}",
+            referer     = "${mainUrl}/",
+            interceptor = interceptor
+        ).document
 
         return document.select("div.golgever").mapNotNull { it.toSearchResult() }
     }
