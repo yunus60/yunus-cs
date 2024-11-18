@@ -9,7 +9,7 @@ import java.util.Base64
 
 open class CloseLoad : ExtractorApi() {
     override val name            = "CloseLoad"
-    override val mainUrl         = "https://closeload.filmmakinesi.film"
+    override val mainUrl         = "https://closeload.filmmakinesi.de"
     override val requiresReferer = true
 
     override suspend fun getUrl(url: String, referer: String?, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit) {
