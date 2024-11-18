@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.lagradost.nicehttp.Requests
 import com.lagradost.nicehttp.ResponseParser
+import com.lagradost.cloudstream3.APIHolder.unixTime
 import kotlin.reflect.KClass
 import okhttp3.FormBody
 
@@ -72,14 +73,20 @@ fun convertRuntimeToMinutes(runtimeText: String): Int {
     return totalMinutes
 }
 
+data class VerifyUrl(
+    val url: String
+)
+
 suspend fun bypassVerification(mainUrl: String): String {
-    val homePageDocument = httpClient.get("$mainUrl/home").document
-    val addHash          = homePageDocument.selectFirst("body")?.attr("data-addhash") ?: ""
-    val verificationUrl  = "https://userverify.netmirror.app/verify?vhf=${addHash}&a=yy&t=${com.lagradost.cloudstream3.APIHolder.unixTime}"
-    httpClient.get(verificationUrl) // Verification request
+    val homePageDocument = httpClient.get("${mainUrl}/home").document
+    val addHash          = homePageDocument.select("body").attr("data-addhash")
+
+    var verificationUrl  = "https://raw.githubusercontent.com/SaurabhKaperwan/Utils/refs/heads/main/NF.json"
+    verificationUrl      = httpClient.get(verificationUrl).parsed<VerifyUrl>().url.replace("###", addHash)
+    httpClient.get("${verificationUrl}&t=${unixTime}")
 
     val requestBody = FormBody.Builder().add("verify", addHash).build()
-    val response    = httpClient.post("$mainUrl/verify2.php", requestBody = requestBody)
+    val response    = httpClient.post("${mainUrl}/verify2.php", requestBody = requestBody)
 
     return response.cookies["t_hash_t"].orEmpty()
 }
