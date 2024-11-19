@@ -15,7 +15,7 @@ class MainUrlUpdater:
             dosya for dosya in os.listdir(self.base_dir)
                 if os.path.isdir(os.path.join(self.base_dir, dosya))
                     and not dosya.startswith(".")
-                        and dosya not in {"gradle", "CanliTV", "OxAx", "__Temel", "RecTV", "SineWix", "YouTube", "NetflixMirror"}
+                        and dosya not in {"gradle", "CanliTV", "OxAx", "__Temel", "SineWix", "YouTube", "NetflixMirror"}
         ])
 
     def _kt_dosyasini_bul(self, dizin, dosya_adi):
@@ -62,6 +62,22 @@ class MainUrlUpdater:
 
         return None
 
+    def _rectv_ver(self):
+        istek = self.oturum.post(
+            url     = "https://firebaseremoteconfig.googleapis.com/v1/projects/791583031279/namespaces/firebase:fetch",
+            headers = {
+                "X-Goog-Api-Key"    : "AIzaSyBbhpzG8Ecohu9yArfCO5tF13BQLhjLahc",
+                "X-Android-Package" : "com.rectv.shot",
+                "User-Agent"        : "Dalvik/2.1.0 (Linux; U; Android 12)",
+            },
+            json    = {
+                "appBuild"      : "81",
+                "appInstanceId" : "evON8ZdeSr-0wUYxf0qs68",
+                "appId"         : "1:791583031279:android:1",
+            }
+        )
+        return istek.json().get("entries", {}).get("api_url", "").replace("/api/", "")
+
     @property
     def mainurl_listesi(self):
         return {
@@ -74,15 +90,24 @@ class MainUrlUpdater:
 
             print("\n")
             konsol.log(f"[~] Kontrol Ediliyor : {eklenti_adi}")
-            try:
-                istek = self.oturum.get(mainurl, allow_redirects=True)
-                konsol.log(f"[+] Kontrol Edildi : {mainurl}")
-            except Exception as hata:
-                konsol.log(f"[!] Kontrol Edilemedi : {mainurl}")
-                konsol.log(f"[!] {type(hata).__name__} : {hata}")
-                continue
+            if eklenti_adi == "RecTV":
+                try:
+                    final_url = self._rectv_ver()
+                    konsol.log(f"[+] Kontrol Edildi   : {mainurl}")
+                except Exception as hata:
+                    konsol.log(f"[!] Kontrol Edilemedi : {mainurl}")
+                    konsol.log(f"[!] {type(hata).__name__} : {hata}")
+                    continue
+            else:
+                try:
+                    istek = self.oturum.get(mainurl, allow_redirects=True)
+                    konsol.log(f"[+] Kontrol Edildi   : {mainurl}")
+                except Exception as hata:
+                    konsol.log(f"[!] Kontrol Edilemedi : {mainurl}")
+                    konsol.log(f"[!] {type(hata).__name__} : {hata}")
+                    continue
 
-            final_url = istek.url[:-1] if istek.url.endswith("/") else istek.url
+                final_url = istek.url[:-1] if istek.url.endswith("/") else istek.url
 
             if mainurl == final_url:
                 continue
