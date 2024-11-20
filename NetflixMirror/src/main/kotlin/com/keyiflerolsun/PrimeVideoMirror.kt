@@ -54,6 +54,10 @@ class PrimeVideoMirror : MainAPI() {
 
     private fun Element.toHomePageList(): HomePageList {
         val name  = select("h2, span").text()
+        if (name.contains("Tamil") || name.contains("Hindi") || name.contains("Indian")) {
+             return HomePageList("", emptyList())
+        }
+
         val items = select("article, .top10-post").mapNotNull {
             it.toSearchResult()
         }
