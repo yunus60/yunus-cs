@@ -1,5 +1,6 @@
 package com.keyiflerolsun
 
+import android.util.Log
 import com.lagradost.cloudstream3.USER_AGENT
 import com.lagradost.cloudstream3.utils.*
 import com.fasterxml.jackson.core.json.JsonReadFeature
@@ -7,10 +8,12 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.lagradost.nicehttp.Requests
+import com.lagradost.nicehttp.NiceResponse
 import com.lagradost.nicehttp.ResponseParser
 import com.lagradost.cloudstream3.APIHolder.unixTime
 import kotlin.reflect.KClass
 import okhttp3.FormBody
+import kotlinx.coroutines.delay
 
 val jsonParser = object : ResponseParser {
     val objectMapper: ObjectMapper = jacksonObjectMapper().configure(
@@ -82,11 +85,24 @@ suspend fun bypassVerification(mainUrl: String): String {
     val addHash          = homePageDocument.select("body").attr("data-addhash")
 
     var verificationUrl  = "https://raw.githubusercontent.com/SaurabhKaperwan/Utils/refs/heads/main/NF.json"
+    // https://userverify.netmirror.app/verify?dp1=###&a=y
+
     verificationUrl      = httpClient.get(verificationUrl).parsed<VerifyUrl>().url.replace("###", addHash)
-    httpClient.get("${verificationUrl}&t=${unixTime}")
+    val hashDigits       = addHash.filter { it.isDigit() }
+    val first16Digits    = hashDigits.take(16)
+    Log.d("NFX", "Verification URL: ${verificationUrl}&t=0.${first16Digits}")
+    httpClient.get("${verificationUrl}&t=0.${first16Digits}")
 
-    val requestBody = FormBody.Builder().add("verify", addHash).build()
-    val response    = httpClient.post("${mainUrl}/verify2.php", requestBody = requestBody)
+    var verifyCheck: String
+    var verifyResponse: NiceResponse
 
-    return response.cookies["t_hash_t"].orEmpty()
+    do {
+        delay(1000)
+        val requestBody = FormBody.Builder().add("verify", addHash).build()
+        verifyResponse  = httpClient.post("${mainUrl}/verify2.php", requestBody = requestBody)
+        verifyCheck     = verifyResponse.text
+        Log.d("NFX", "Verification Check: $verifyCheck")
+    } while (!verifyCheck.contains("\"statusup\":\"All Done\""))
+
+    return verifyResponse.cookies["t_hash_t"].orEmpty()
 }
