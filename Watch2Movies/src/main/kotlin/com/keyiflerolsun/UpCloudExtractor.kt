@@ -3,6 +3,8 @@
 package com.keyiflerolsun
 import com.lagradost.cloudstream3.extractors.Rabbitstream
 
+// TODO: Extractors should be coded here
+
 class ZiZiCoi : Rabbitstream() {
     override var name    = "ZiZiCoi"
     override var mainUrl = "https://zizicoi.online"
