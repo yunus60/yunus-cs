@@ -33,7 +33,7 @@ class FullHDFilm : MainAPI() {
         "${mainUrl}/biyografi-filmleri/page"			to "Biyografi",
         "${mainUrl}/dram-filmleri/page"				    to "Dram",
         "${mainUrl}/fantastik-filmler-izle/page"		to "Fantastik",
-        "${mainUrl}/gerilim-filmleri-izle-hd"		    to "Gerilim",
+        "${mainUrl}/gerilim-filmleri-izle-hd/page"		to "Gerilim",
         "${mainUrl}/gizem-filmleri/page"				to "Gizem",
         "${mainUrl}/komedi-filmleri/page"				to "Komedi",
         "${mainUrl}/korku-filmleri-izle/page"			to "Korku",
