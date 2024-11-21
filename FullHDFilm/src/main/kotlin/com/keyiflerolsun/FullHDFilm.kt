@@ -20,6 +20,9 @@ class FullHDFilm : MainAPI() {
     override val supportedTypes       = setOf(TvType.Movie, TvType.TvSeries)
 
     override val mainPage = mainPageOf(
+        "${mainUrl}/yabanci-dizi-izle/page"			    to "Yabancı Dizi",
+        "${mainUrl}/yabanci-film-izle/page"			    to "Yabancı Filmler",
+        "${mainUrl}/yerli-film-izle/page"				to "Yerli Film",
         "${mainUrl}/aile-filmleri/page"				    to "Aile",
         "${mainUrl}/aksiyon-filmleri-izle-hd1/page"	    to "Aksiyon",
         "${mainUrl}/animasyon-filmleri-izlesene/page"	to "Animasyon",
@@ -31,21 +34,13 @@ class FullHDFilm : MainAPI() {
         "${mainUrl}/fantastik-filmler-izle/page"		to "Fantastik",
         "${mainUrl}/gerilim-filmleri-izle-hd"		    to "Gerilim",
         "${mainUrl}/gizem-filmleri/page"				to "Gizem",
-        "${mainUrl}/hint-filmleri/page"				    to "Hint",
         "${mainUrl}/komedi-filmleri/page"				to "Komedi",
         "${mainUrl}/korku-filmleri-izle/page"			to "Korku",
         "${mainUrl}/macera-filmleri-izle-hd/page"		to "Macera",
-        "${mainUrl}/muzik-filmleri/page"				to "Müzik",
         "${mainUrl}/netflix-filmleri-izle/page"		    to "Netflix",
         "${mainUrl}/romantik-filmler/page"			    to "Romantik",
         "${mainUrl}/savas-filmleri-izle-hd/page"		to "Savaş",
-        "${mainUrl}/spor-filmleri/page"				    to "Spor",
-        "${mainUrl}/suc-filmleri-izle/page"			    to "Suç",
-        "${mainUrl}/tarih-filmleri/page"				to "Tarih",
-        "${mainUrl}/vahsi-bati-filmleri/page"			to "Vahşi Batı",
-        "${mainUrl}/yabanci-dizi-izle/page"			    to "Yabancı Dizi",
-        "${mainUrl}/yabanci-film-izle/page"			    to "Yabancı Filmler",
-        "${mainUrl}/yerli-film-izle/page"				to "Yerli Film",
+        "${mainUrl}/suc-filmleri-izle/page"			    to "Suç"
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
@@ -107,7 +102,7 @@ class FullHDFilm : MainAPI() {
                 val iframeLink = app.get(iframeData, referer="${mainUrl}/").url.toString()
 
                 val sz_num = partNumber.substringBefore("sezon").toIntOrNull() ?: 1
-                val ep_num = partNumber.substringAfter("sezon").toIntOrNull() ?: 1
+                val ep_num = partName.substringAfter(".")?.trim()?.toIntOrNull() ?: 1
 
                 episodes.add(Episode(
                     data    = iframeLink,
