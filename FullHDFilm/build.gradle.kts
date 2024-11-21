@@ -1,9 +1,9 @@
-version = 2
+version = 0
 
 cloudstream {
     authors     = listOf("keyiflerolsun")
     language    = "tr"
-    description = "Fullhdfilm ile en yeni vizyon filmler Full HD ve kesintisiz film sizlerle. Özgün film arşivimizle en üstün kaliteli film izle keyfini sunuyoruz."
+    description = "!!! YAPIM AŞAMASINDA !!! Fullhdfilm ile en yeni vizyon filmler Full HD ve kesintisiz film sizlerle. Özgün film arşivimizle en üstün kaliteli film izle keyfini sunuyoruz."
 
     /**
      * Status int as the following:
@@ -12,7 +12,7 @@ cloudstream {
      * 2: Slow
      * 3: Beta only
     **/
-    status  = 1 // will be 3 if unspecified
+    status  = 3 // will be 3 if unspecified
     tvTypes = listOf("Movie")
     iconUrl = "https://www.google.com/s2/favicons?domain=fullhdfilm.pro&sz=%size%"
 }
