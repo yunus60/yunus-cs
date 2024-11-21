@@ -101,7 +101,7 @@ class FullHDFilm : MainAPI() {
                 val iframeData = iframeSkici.iframeCoz(value!!)
                 val iframeLink = app.get(iframeData, referer="${mainUrl}/").url.toString()
 
-                val sz_num = partNumber.takeIf { it.contains("sezon") }?.substringAfter("sezon")?.toIntOrNull() ?: 1
+                val sz_num = partNumber.takeIf { it.contains("sezon") }?.substringBefore("sezon")?.toIntOrNull() ?: 1
                 val ep_num = partName.substringBefore(".")?.trim()?.toIntOrNull() ?: 1
 
                 episodes.add(Episode(
