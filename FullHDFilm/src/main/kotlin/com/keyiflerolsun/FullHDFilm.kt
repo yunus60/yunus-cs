@@ -124,7 +124,21 @@ class FullHDFilm : MainAPI() {
             val iframeData = iframeSkici.iframeCoz(value!!)
             val iframeLink = app.get(iframeData, referer="${mainUrl}/").url.toString()
             Log.d("FHDF", "iframeLink » ${iframeLink}")
-            loadExtractor(iframeLink, "${mainUrl}/", subtitleCallback, callback)
+
+            //  loadExtractor(iframeLink, "${mainUrl}/", subtitleCallback, callback)
+
+            loadExtractor(iframeLink, subtitleCallback) { extractor ->
+                callback.invoke (
+                    ExtractorLink (
+                        source  = "${extractor.name} - ${partName}",
+                        name    = "${extractor.name} - ${partName}",
+                        url     = extractor.url,
+                        referer = "${mainUrl}/",
+                        quality = Qualities.Unknown.value,
+                        type    = INFER_TYPE
+                    )
+                )
+            }
         }
 
         return true
