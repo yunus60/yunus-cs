@@ -79,7 +79,7 @@ class FullHDFilm : MainAPI() {
         val actors      = document.select("sc[itemprop='actor'] span").map { Actor(it.text()) }
         val trailer     = fixUrlNull(document.selectFirst("[property='og:video']")?.attr("content"))
 
-        if (url.contains("-dizi")) {
+        if (url.contains("-dizi") || tags.any { it.lowercase().contains("dizi") }) {
             val episodes = mutableListOf<Episode>()
 
             val iframeSkici = IframeKodlayici()
@@ -102,7 +102,7 @@ class FullHDFilm : MainAPI() {
                 val iframeLink = app.get(iframeData, referer="${mainUrl}/").url.toString()
 
                 val sz_num = partNumber.substringBefore("sezon").toIntOrNull() ?: 1
-                val ep_num = partName.substringAfter(".")?.trim()?.toIntOrNull() ?: 1
+                val ep_num = partName.substringBefore(".")?.trim()?.toIntOrNull() ?: 1
 
                 episodes.add(Episode(
                     data    = iframeLink,
