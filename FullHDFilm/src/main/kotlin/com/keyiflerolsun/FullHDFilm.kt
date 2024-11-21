@@ -23,6 +23,7 @@ class FullHDFilm : MainAPI() {
         "${mainUrl}/yabanci-dizi-izle/page"			    to "Yabancı Dizi",
         "${mainUrl}/yabanci-film-izle/page"			    to "Yabancı Filmler",
         "${mainUrl}/yerli-film-izle/page"				to "Yerli Film",
+        "${mainUrl}/netflix-filmleri-izle/page"		    to "Netflix",
         "${mainUrl}/aile-filmleri/page"				    to "Aile",
         "${mainUrl}/aksiyon-filmleri-izle-hd1/page"	    to "Aksiyon",
         "${mainUrl}/animasyon-filmleri-izlesene/page"	to "Animasyon",
@@ -37,7 +38,6 @@ class FullHDFilm : MainAPI() {
         "${mainUrl}/komedi-filmleri/page"				to "Komedi",
         "${mainUrl}/korku-filmleri-izle/page"			to "Korku",
         "${mainUrl}/macera-filmleri-izle-hd/page"		to "Macera",
-        "${mainUrl}/netflix-filmleri-izle/page"		    to "Netflix",
         "${mainUrl}/romantik-filmler/page"			    to "Romantik",
         "${mainUrl}/savas-filmleri-izle-hd/page"		to "Savaş",
         "${mainUrl}/suc-filmleri-izle/page"			    to "Suç"
