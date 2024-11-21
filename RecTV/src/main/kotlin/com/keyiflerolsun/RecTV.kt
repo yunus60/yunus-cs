@@ -22,7 +22,8 @@ class RecTV : MainAPI() {
 
     override val mainPage = mainPageOf(
         "${mainUrl}/api/channel/by/filtres/0/0/SAYFA/${swKey}/"      to "Canlı",
-        "${mainUrl}/api/movie/by/filtres/0/created/SAYFA/${swKey}/"  to "Son Yüklenen",
+        "${mainUrl}/api/movie/by/filtres/0/created/SAYFA/${swKey}/"  to "Son Filmler",
+        "${mainUrl}/api/serie/by/filtres/0/created/SAYFA/${swKey}/"  to "Son Diziler",
         "${mainUrl}/api/movie/by/filtres/14/created/SAYFA/${swKey}/" to "Aile",
         "${mainUrl}/api/movie/by/filtres/1/created/SAYFA/${swKey}/"  to "Aksiyon",
         "${mainUrl}/api/movie/by/filtres/13/created/SAYFA/${swKey}/" to "Animasyon",
