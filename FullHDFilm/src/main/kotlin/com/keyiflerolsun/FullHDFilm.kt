@@ -176,11 +176,11 @@ class FullHDFilm : MainAPI() {
             loadExtractor(iframeLink, "${mainUrl}/", subtitleCallback) { extractor ->
                 callback.invoke (
                     ExtractorLink (
-                        source  = "${extractor.name} - ${partName}",
-                        name    = "${extractor.name} - ${partName}",
+                        source  = "${partName} - ${extractor.source}",
+                        name    = "${partName} - ${extractor.name}",
                         url     = extractor.url,
                         referer = extractor.referer,
-                        quality = Qualities.Unknown.value,
+                        quality = extractor.quality,
                         type    = extractor.type
                     )
                 )
