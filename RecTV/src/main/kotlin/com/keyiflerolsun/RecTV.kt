@@ -9,7 +9,7 @@ import com.lagradost.cloudstream3.utils.*
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 
 class RecTV : MainAPI() {
-    override var mainUrl              = "https://none.rectv1252.xyz"
+    override var mainUrl              = "https://soft-wind-5106.rectv5.workers.dev"
     override var name                 = "RecTV"
     override val hasMainPage          = true
     override var lang                 = "tr"
