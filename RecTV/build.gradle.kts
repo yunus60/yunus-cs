@@ -1,4 +1,4 @@
-version = 21
+version = 22
 
 cloudstream {
     authors     = listOf("keyiflerolsun", "yusiqo")
@@ -13,6 +13,6 @@ cloudstream {
      * 3: Beta only
     **/
     status  = 1 // will be 3 if unspecified
-    tvTypes = listOf("Movie", "Live")
+    tvTypes = listOf("Movie", "Live", "TvSeries")
     iconUrl = "https://rectvapk.cc/wp-content/uploads/2023/02/Rec-TV.webp"
 }

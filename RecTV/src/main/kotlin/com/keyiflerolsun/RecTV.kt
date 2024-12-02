@@ -16,7 +16,7 @@ class RecTV : MainAPI() {
     override val hasQuickSearch       = false
     override val hasChromecastSupport = true
     override val hasDownloadSupport   = true
-    override val supportedTypes       = setOf(TvType.Movie, TvType.Live)
+    override val supportedTypes       = setOf(TvType.Movie, TvType.Live, TvType.TvSeries)
 
     val swKey = "4F5A9C3D9A86FA54EACEDDD635185/c3c5bd17-e37b-4b94-a944-8a3688a30452"
 
