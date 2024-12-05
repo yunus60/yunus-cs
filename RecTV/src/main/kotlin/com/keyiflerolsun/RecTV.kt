@@ -41,7 +41,7 @@ class RecTV : MainAPI() {
         val page = page - 1
 
         val url  = request.data.replace("SAYFA", "${page}")
-        val home = app.get(url)
+        val home = app.get(url, headers=mapOf("user-agent" to "okhttp/4.12.0"))
 
         val movies = AppUtils.tryParseJson<List<RecItem>>(home.text)!!.mapNotNull { item ->
             val toDict = jacksonObjectMapper().writeValueAsString(item)
