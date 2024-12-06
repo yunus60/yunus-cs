@@ -19,19 +19,19 @@ class SuperFilmGeldi : MainAPI() {
     override val supportedTypes       = setOf(TvType.Movie)
 
     override val mainPage = mainPageOf(
-        "${mainUrl}/page/"  			                        to "Son Eklenenler",
-        "${mainUrl}/hdizle/category/aksiyon/page/"  			to "Aksiyon",
-        "${mainUrl}/hdizle/category/animasyon/page/"  			to "Animasyon",
-        "${mainUrl}/hdizle/category/belgesel/page/"  			to "Belgesel",
-        "${mainUrl}/hdizle/category/bilim-kurgu/page/"  		to "Bilim Kurgu",
-        "${mainUrl}/hdizle/category/fantastik/page/"  			to "Fantastik",
-        "${mainUrl}/hdizle/category/komedi-filmleri/page/" 		to "Komedi Filmleri",
-        "${mainUrl}/hdizle/category/macera/page/"  				to "Macera",
-        "${mainUrl}/hdizle/category/gerilim/page/"  			to "Gerilim",
-        "${mainUrl}/hdizle/category/suc/page/"  				to "Suç",
-        "${mainUrl}/hdizle/category/karete-filmleri/page/" 		to "Karete Filmleri",
-        "${mainUrl}/hdizle/category/yesilcam-erotik-izle/page/"	to "Yeşilçam Erotik",
-        "${mainUrl}/hdizle/category/erotik-filmler-izle/page/"	to "Erotik Filmler izle"
+        "${mainUrl}/page/"                                        to "Son Eklenenler",
+        "${mainUrl}/hdizle/category/aksiyon/page/"                to "Aksiyon",
+        "${mainUrl}/hdizle/category/animasyon/page/"              to "Animasyon",
+        "${mainUrl}/hdizle/category/belgesel/page/"               to "Belgesel",
+        "${mainUrl}/hdizle/category/bilim-kurgu/page/"            to "Bilim Kurgu",
+        "${mainUrl}/hdizle/category/fantastik/page/"              to "Fantastik",
+        "${mainUrl}/hdizle/category/komedi-filmleri/page/"        to "Komedi Filmleri",
+        "${mainUrl}/hdizle/category/macera/page/"                 to "Macera",
+        "${mainUrl}/hdizle/category/gerilim/page/"                to "Gerilim",
+        "${mainUrl}/hdizle/category/suc/page/"                    to "Suç",
+        "${mainUrl}/hdizle/category/karete-filmleri/page/"        to "Karete Filmleri",
+        "${mainUrl}/hdizle/category/yesilcam-erotik-izle/page/"   to "Yeşilçam Erotik",
+        "${mainUrl}/hdizle/category/hd-erotik-filmler-izle/page/" to "Erotik Filmler"
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
