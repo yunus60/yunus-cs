@@ -34,6 +34,7 @@ class HDFilmCehennemi : MainAPI() {
         "${mainUrl}/tur/belgesel-filmlerini-izle-1"       to "Belgesel Filmleri",
         "${mainUrl}/tur/bilim-kurgu-filmlerini-izleyin-2" to "Bilim Kurgu Filmleri",
         "${mainUrl}/tur/komedi-filmlerini-izleyin-1"      to "Komedi Filmleri",
+        "${mainUrl}/tur/korku-filmlerini-izle-2/"         to "Korku Filmleri",
         "${mainUrl}/tur/romantik-filmleri-izle-1"         to "Romantik Filmleri"
     )
 
