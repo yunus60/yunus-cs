@@ -81,6 +81,22 @@ class HQPorner : MainAPI() {
 
     override suspend fun quickSearch(query: String): List<SearchResponse> = search(query)
 
+    private fun convertTimeToMinutes(timeText: String): Int {
+        if (timeText == "") {
+            return 0
+        }
+
+        val regex = Regex("""(\d+)m (\d+)s""")
+        val matchResult = regex.find(timeText)
+        return if (matchResult != null) {
+            val minutes = matchResult.groupValues[1].toInt()
+            val seconds = matchResult.groupValues[2].toInt()
+            minutes + seconds / 60
+        } else {
+            0
+        }
+    }
+
     override suspend fun load(url: String): LoadResponse? {
         val loadData = tryParseJson<LoadUrl>(url) ?: return null
         val document = app.get(loadData.href).document
@@ -90,7 +106,7 @@ class HQPorner : MainAPI() {
         val poster          = loadData.posterUrl
         val description     = title
         val tags            = document.select("p a[href*='/category']").map { it.text() }
-        // val duration        = document.selectFirst("span.runtime")?.text()?.split(" ")?.first()?.trim()?.toIntOrNull()
+        val duration        = convertTimeToMinutes(document.selectFirst("li.fa-clock-o")?.text()?.trim() ?: "")
         val recommendations = document.select("div.row div.row section").mapNotNull { it.toMainPageResult() }
         val actors          = document.select("li a[href*='/actress']").map { Actor(it.text()) }
 
@@ -98,7 +114,7 @@ class HQPorner : MainAPI() {
             this.posterUrl       = poster
             this.plot            = description
             this.tags            = tags
-            // this.duration        = duration
+            this.duration        = duration
             this.recommendations = recommendations
             addActors(actors)
         }
