@@ -22,7 +22,6 @@ class HQPorner : MainAPI() {
     override val vpnStatus            = VPNStatus.MightBeNeeded
 
     override val mainPage = mainPageOf(
-        "${mainUrl}/top"                   to "All Time Best",
         "${mainUrl}/top/month"             to "Month TOP",
         "${mainUrl}/top/week"              to "Week TOP",
         "${mainUrl}/category/1080p-porn"   to "1080p",
