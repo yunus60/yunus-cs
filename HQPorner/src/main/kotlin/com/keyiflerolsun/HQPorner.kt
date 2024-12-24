@@ -22,21 +22,43 @@ class HQPorner : MainAPI() {
     override val vpnStatus            = VPNStatus.MightBeNeeded
 
     override val mainPage = mainPageOf(
-        "${mainUrl}/top/month"             to "Month TOP",
-        "${mainUrl}/top/week"              to "Week TOP",
-        "${mainUrl}/category/1080p-porn"   to "1080p",
-        "${mainUrl}/category/4k-porn"      to "4K",
-        "${mainUrl}/category/60fps-porn"   to "60FPS",
-        "${mainUrl}/category/amateur"      to "Amateur",
-        "${mainUrl}/category/teen-porn"    to "Teen",
-        "${mainUrl}/category/babe"         to "Babe",
-        "${mainUrl}/category/pov"          to "POV",
-        "${mainUrl}/category/orgasm"       to "Orgasm",
-        "${mainUrl}/category/porn-massage" to "Sex Massage",
-        "${mainUrl}/category/threesome"    to "Threesome",
-        "${mainUrl}/category/group-sex"    to "Group Sex",
-        "${mainUrl}/category/milf"         to "Milf",
-        "${mainUrl}/category/mature"       to "Mature"
+        "${mainUrl}/top/month"               to "Month TOP",
+        "${mainUrl}/top/week"                to "Week TOP",
+        "${mainUrl}/category/1080p-porn"     to "1080p",
+        "${mainUrl}/category/4k-porn"        to "4K",
+        "${mainUrl}/category/60fps-porn"     to "60FPS",
+        "${mainUrl}/category/amateur"        to "Amateur",
+        "${mainUrl}/category/teen-porn"      to "Teen",
+        "${mainUrl}/category/babe"           to "Babe",
+        "${mainUrl}/category/pov"            to "POV",
+        "${mainUrl}/category/orgasm"         to "Orgasm",
+        "${mainUrl}/category/porn-massage"   to "Sex Massage",
+        "${mainUrl}/category/threesome"      to "Threesome",
+        "${mainUrl}/category/group-sex"      to "Group Sex",
+        "${mainUrl}/category/lesbian"        to "Lesbian",
+        "${mainUrl}/category/milf"           to "Milf",
+        "${mainUrl}/category/mature"         to "Mature",
+        "${mainUrl}/category/long-hair"      to "Long Hair",
+        "${mainUrl}/category/big-tits"       to "Big Tits",
+        "${mainUrl}/category/small-tits"     to "Small tits",
+        "${mainUrl}/category/squeezing-tits" to "Squeezing Tits",
+        "${mainUrl}/category/big-ass"        to "Big Ass",
+        "${mainUrl}/category/latina"         to "Latina",
+        "${mainUrl}/category/russian"        to "Russian",
+        "${mainUrl}/category/blonde"         to "Blonde",
+        "${mainUrl}/category/redhead"        to "Redhead",
+        "${mainUrl}/category/blowjob"        to "Blowjob",
+        "${mainUrl}/category/brunette"       to "Brunette",
+        "${mainUrl}/category/undressing"     to "Undressing",
+        "${mainUrl}/category/cumshot"        to "Cumshot",
+        "${mainUrl}/category/outdoor"        to "Outdoor",
+        "${mainUrl}/category/deepthroat"     to "Deepthroat",
+        "${mainUrl}/category/handjob"        to "Handjob",
+        "${mainUrl}/category/pussy-licking"  to "Pussy Licking",
+        "${mainUrl}/category/moaning"        to "Moaning",
+        "${mainUrl}/category/vintage"        to "Vintage",
+        "${mainUrl}/category/tattooed"       to "Tattooed",
+        "${mainUrl}/category/beach-porn"     to "Beach"
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
@@ -100,7 +122,7 @@ class HQPorner : MainAPI() {
         val loadData = tryParseJson<LoadUrl>(url) ?: return null
         val document = app.get(loadData.href).document
 
-        val lowerCaseTitle  = document.selectFirst("h1.main-h1")?.text() ?:"No Title"
+        val lowerCaseTitle  = document.selectFirst("h1.main-h1")?.text() ?: "No Title"
         val title           = lowerCaseTitle.split(" ").joinToString(" ") { it.replaceFirstChar { char -> char.uppercase() } }
         val poster          = loadData.posterUrl
         val description     = title
@@ -108,6 +130,10 @@ class HQPorner : MainAPI() {
         val duration        = convertTimeToMinutes(document.selectFirst("li.fa-clock-o")?.text()?.trim() ?: "")
         val recommendations = document.select("div.row div.row section").mapNotNull { it.toMainPageResult() }
         val actors          = document.select("li a[href*='/actress']").map { Actor(it.text()) }
+
+        if (actors.isEmpty() && duration == 0 && tags.isEmpty()) {
+            return null
+        }
 
         return newMovieLoadResponse(title, url, TvType.NSFW, loadData.href) {
             this.posterUrl       = poster
