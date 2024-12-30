@@ -42,7 +42,7 @@ jobs:
           java-version: 11
 
       - name: Android SDK Ayarla
-        uses: android-actions/setup-android@v2
+        uses: android-actions/setup-android@v3
 
       - name: Eklentileri Derle
         run: |
