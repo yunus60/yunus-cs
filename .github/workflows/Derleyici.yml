@@ -48,8 +48,6 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/src
           chmod +x gradlew
-          ./gradlew assemblePrerelease build androidSourcesJar
-          ./gradlew makeJar # for classes.jar, has to be done after assemblePrerelease
           ./gradlew make makePluginsJson
           cp **/build/*.cs3 $GITHUB_WORKSPACE/builds
           cp build/plugins.json $GITHUB_WORKSPACE/builds
