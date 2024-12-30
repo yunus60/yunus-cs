@@ -35,14 +35,14 @@ jobs:
       - name: Eski Derlemeleri Temizle
         run: rm $GITHUB_WORKSPACE/builds/*.cs3 || true
 
-      - name: JDK 17 Ayarla
+      - name: JDK 11 Ayarla
         uses: actions/setup-java@v4
         with:
           distribution: adopt
-          java-version: 17
+          java-version: 11
 
       - name: Android SDK Ayarla
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v2
 
       - name: Eklentileri Derle
         run: |
