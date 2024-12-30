@@ -92,7 +92,10 @@ class RecTV : MainAPI() {
         val veri = AppUtils.tryParseJson<RecItem>(url) ?: return null
 
         if (veri.type == "serie") {
-            val diziReq  = app.get("${mainUrl}/api/season/by/serie/${veri.id}/${swKey}/")
+            val diziReq  = app.get(
+                "${mainUrl}/api/season/by/serie/${veri.id}/${swKey}/",
+                headers = mapOf("user-agent" to "okhttp/4.12.0")
+            )
             val sezonlar = AppUtils.tryParseJson<List<RecDizi>>(diziReq.text) ?: return null
 
             val episodeList = mutableListOf<Episode>()
