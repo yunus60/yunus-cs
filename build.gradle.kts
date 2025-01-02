@@ -43,7 +43,7 @@ subprojects {
 
     android {
         defaultConfig {
-            minSdk = 21
+            minSdk = 26
             compileSdkVersion(33)
             targetSdk = 33
         }
@@ -52,8 +52,8 @@ subprojects {
             sourceCompatibility = JavaVersion.VERSION_1_8
             targetCompatibility = JavaVersion.VERSION_1_8
 
-            // Enables desugaring for Java 8+ APIs
-            isCoreLibraryDesugaringEnabled = true
+            // Enables desugaring for Java 8+ APIs // ! Not Working for minSdk = 21
+            // isCoreLibraryDesugaringEnabled = true
         }
 
         tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
@@ -75,8 +75,8 @@ subprojects {
         // Stubs for all Cloudstream classes
         apk("com.lagradost:cloudstream3:pre-release")
 
-        // Enables desugaring for Java 8+ APIs
-        implementation("com.android.tools:desugar_jdk_libs:1.1.6")
+        // Enables desugaring for Java 8+ APIs // ! Not Working for minSdk = 21
+        // implementation("com.android.tools:desugar_jdk_libs:1.1.6")
 
         // these dependencies can include any of those which are added by the app,
         // but you dont need to include any of them if you dont need them
