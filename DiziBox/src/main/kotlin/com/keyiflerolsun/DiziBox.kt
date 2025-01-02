@@ -13,7 +13,7 @@ import okhttp3.Interceptor
 import okhttp3.Response
 import org.jsoup.Jsoup
 import java.net.URLDecoder
-import java.util.Base64
+import android.util.Base64
 
 class DiziBox : MainAPI() {
     override var mainUrl              = "https://www.dizibox.plus"
@@ -226,7 +226,7 @@ class DiziBox : MainAPI() {
             val atobData = Regex("""unescape\(\"(.*)\"\)""").find(subDoc.html())?.groupValues?.get(1)
             if (atobData != null) {
                 val decodedAtob = URLDecoder.decode(atobData, "utf-8")
-                val strAtob     = Base64.getDecoder().decode(decodedAtob).toString(Charsets.UTF_8)
+                val strAtob     = String(Base64.decode(decodedAtob, Base64.DEFAULT), Charsets.UTF_8)
                 subDoc          = Jsoup.parse(strAtob)
             }
 
@@ -250,7 +250,7 @@ class DiziBox : MainAPI() {
             val atobData = Regex("""unescape\(\"(.*)\"\)""").find(subDoc.html())?.groupValues?.get(1)
             if (atobData != null) {
                 val decodedAtob = URLDecoder.decode(atobData, "utf-8")
-                val strAtob     = Base64.getDecoder().decode(decodedAtob).toString(Charsets.UTF_8)
+                val strAtob     = String(Base64.decode(decodedAtob, Base64.DEFAULT), Charsets.UTF_8)
                 subDoc          = Jsoup.parse(strAtob)
             }
 

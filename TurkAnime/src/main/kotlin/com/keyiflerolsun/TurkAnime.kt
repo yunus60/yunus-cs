@@ -7,7 +7,7 @@ import org.jsoup.nodes.Element
 import org.jsoup.nodes.Document
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
-import java.util.Base64
+import android.util.Base64
 import com.lagradost.cloudstream3.extractors.helper.AesHelper
 
 class TurkAnime : MainAPI() {
@@ -134,7 +134,7 @@ class TurkAnime : MainAPI() {
 
     private fun iframe2AesLink(iframe: String): String? {
         var aesData = iframe.substringAfter("embed/#/url/").substringBefore("?status")
-        aesData     = String(Base64.getDecoder().decode(aesData))
+        aesData     = String(Base64.decode(aesData, Base64.DEFAULT))
 
         val aesKey  = "710^8A@3@>T2}#zN5xK?kR7KNKb@-A!LzYL5~M1qU0UfdWsZoBm4UUat%}ueUv6E--*hDPPbH7K2bp9^3o41hw,khL:}Kx8080@M"
         val aesLink = AesHelper.cryptoAESHandler(aesData, aesKey.toByteArray(), false)?.replace("\\", "") ?: throw ErrorLoadingException("failed to decrypt")
@@ -180,13 +180,13 @@ class TurkAnime : MainAPI() {
         //     }
         // }
 
-        document.select("button[onclick*='ajax/videosec']").forEach { button ->
-            val butonLink = fixUrlNull(button.attr("onclick").substringAfter("IndexIcerik('").substringBefore("'")) ?: return@forEach
+        for (button in document.select("button[onclick*='ajax/videosec']")) {
+            val butonLink = fixUrlNull(button.attr("onclick").substringAfter("IndexIcerik('").substringBefore("'")) ?: continue
             val butonName = button.ownText().trim()
             val subDoc    = app.get(butonLink, headers=mapOf("X-Requested-With" to "XMLHttpRequest")).document
 
-            val subFrame  = fixUrlNull(subDoc.selectFirst("iframe")?.attr("src")) ?: return@forEach
-            val subLink   = iframe2AesLink(subFrame) ?: return@forEach
+            val subFrame  = fixUrlNull(subDoc.selectFirst("iframe")?.attr("src")) ?: continue
+            val subLink   = iframe2AesLink(subFrame) ?: continue
             Log.d("TRANM", "${butonName} » ${subLink}")
 
             loadExtractor(subLink, "${mainUrl}/", subtitleCallback, callback)
@@ -201,12 +201,12 @@ class TurkAnime : MainAPI() {
         val iframe    = fixUrlNull(document.selectFirst("iframe")?.attr("src")) ?: return false
 
         if (iframe.contains("a-ads.com")) {
-            document.select("button[onclick*='ajax/videosec']").forEach { button ->
-                val butonLink = fixUrlNull(button.attr("onclick").substringAfter("IndexIcerik('").substringBefore("'")) ?: return@forEach
+            for (button in document.select("button[onclick*='ajax/videosec']")) {
+                val butonLink = fixUrlNull(button.attr("onclick").substringAfter("IndexIcerik('").substringBefore("'")) ?: continue
                 val butonName = button.ownText().trim()
                 val subDoc    = app.get(butonLink, headers=mapOf("X-Requested-With" to "XMLHttpRequest")).document
 
-                val subFrame  = fixUrlNull(subDoc.selectFirst("iframe")?.attr("src")) ?: return@forEach
+                val subFrame  = fixUrlNull(subDoc.selectFirst("iframe")?.attr("src")) ?: continue
                 iframe2Load(subDoc, subFrame, subtitleCallback, callback)
             }
         } else {

@@ -8,7 +8,7 @@ import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.extractors.helper.AesHelper
 import java.net.URLEncoder
 import java.net.URLDecoder
-import java.util.Base64
+import android.util.Base64
 
 class OxAxPlayer : ExtractorApi() {
     override var name            = "OxAxPlayer"
@@ -16,11 +16,11 @@ class OxAxPlayer : ExtractorApi() {
     override val requiresReferer = true
 
     suspend fun base64Encode(str: String): String {
-        return Base64.getEncoder().encodeToString(URLEncoder.encode(str, "UTF-8").toByteArray(Charsets.UTF_8))
+        return Base64.encodeToString(URLEncoder.encode(str, "UTF-8").toByteArray(Charsets.UTF_8), Base64.DEFAULT)
     }
 
     suspend fun base64Decode(str: String): String {
-        return URLDecoder.decode(String(Base64.getDecoder().decode(str), Charsets.UTF_8), "UTF-8")
+        return URLDecoder.decode(String(Base64.decode(str, Base64.DEFAULT), Charsets.UTF_8), "UTF-8")
     }
 
     suspend fun decodeAtob(base64Str: String): String {

@@ -15,7 +15,7 @@ import okhttp3.Interceptor
 import okhttp3.Response
 import org.jsoup.Jsoup
 import java.net.URLDecoder
-import java.util.Base64
+import android.util.Base64
 
 class WebteIzle : MainAPI() {
     override var mainUrl              = "https://webteizle.info"

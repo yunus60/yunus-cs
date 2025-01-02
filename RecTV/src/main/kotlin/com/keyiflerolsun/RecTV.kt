@@ -71,16 +71,20 @@ class RecTV : MainAPI() {
 
         val sonuclar = mutableListOf<SearchResponse>()
 
-        veriler?.channels?.forEach { item ->
-            val toDict = jacksonObjectMapper().writeValueAsString(item)
+        veriler?.channels?.let { channels ->
+            for (item in channels) {
+                val toDict = jacksonObjectMapper().writeValueAsString(item)
 
-            sonuclar.add(newMovieSearchResponse(item.title, "${toDict}", TvType.Movie) { this.posterUrl = item.image })
+                sonuclar.add(newMovieSearchResponse(item.title, toDict, TvType.Movie) { this.posterUrl = item.image })
+            }
         }
 
-        veriler?.posters?.forEach { item ->
-            val toDict = jacksonObjectMapper().writeValueAsString(item)
+        veriler?.posters?.let { posters ->
+            for (item in posters) {
+                val toDict = jacksonObjectMapper().writeValueAsString(item)
 
-            sonuclar.add(newMovieSearchResponse(item.title, "${toDict}", TvType.Movie) { this.posterUrl = item.image })
+                sonuclar.add(newMovieSearchResponse(item.title, toDict, TvType.Movie) { this.posterUrl = item.image })
+            }
         }
 
         return sonuclar
@@ -166,7 +170,7 @@ class RecTV : MainAPI() {
 
         val veri = AppUtils.tryParseJson<RecItem>(data) ?: return false
 
-        veri.sources.forEach { source ->
+        for (source in veri.sources) {
             Log.d("RCTV", "source » ${source}")
             callback.invoke(
                 ExtractorLink(
