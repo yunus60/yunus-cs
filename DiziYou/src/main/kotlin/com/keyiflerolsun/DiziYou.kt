@@ -81,7 +81,7 @@ class DiziYou : MainAPI() {
 
             Episode(
                 data    = epHref,
-                name    = epName + " » " + it.selectFirst("div.bolumismi")?.text()?.trim(),
+                name    = it.selectFirst("div.bolumismi")?.text()?.trim()?.replace(Regex("""[\(\)]"""), "")?.trim() ?: epName,
                 season  = epSeason,
                 episode = epEpisode
             )
@@ -116,10 +116,12 @@ class DiziYou : MainAPI() {
                 subTitles.add(DiziyouSubtitle("Turkish", "https://storage.diziyou.co/subtitles/${itemId}/tr.vtt"))
                 streamUrls.add(DiziyouStream("Orjinal Dil", "https://storage.diziyou.co/episodes/${itemId}/play.m3u8"))
             }
+
             if (optId == "ingilizceAltyazili") {
                 subTitles.add(DiziyouSubtitle("English", "https://storage.diziyou.co/subtitles/${itemId}/en.vtt"))
                 streamUrls.add(DiziyouStream("Orjinal Dil", "https://storage.diziyou.co/episodes/${itemId}/play.m3u8"))
             }
+
             if (optId == "turkceDublaj") {
                 streamUrls.add(DiziyouStream("Türkçe Dublaj", "https://storage.diziyou.co/episodes/${itemId}_tr/play.m3u8"))
             }
