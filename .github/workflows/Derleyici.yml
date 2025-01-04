@@ -22,12 +22,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "'src' Depo Kontrolü"
-        uses: actions/checkout@master
+        uses: actions/checkout@v4.2.2
         with:
           path: "src"
 
       - name: "'build' Depo Kontrolü"
-        uses: actions/checkout@master
+        uses: actions/checkout@v4.2.2
         with:
           ref: "builds"
           path: "builds"
@@ -35,11 +35,11 @@ jobs:
       - name: Eski Derlemeleri Temizle
         run: rm $GITHUB_WORKSPACE/builds/*.cs3 || true
 
-      - name: JDK 23 Ayarla
+      - name: JDK 17 Ayarla
         uses: actions/setup-java@v4.6.0
         with:
           distribution: adopt
-          java-version: 23
+          java-version: 17
 
       - name: Android SDK Ayarla
         uses: android-actions/setup-android@v3.2.2

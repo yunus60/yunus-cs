@@ -51,9 +51,6 @@ subprojects {
         compileOptions {
             sourceCompatibility = JavaVersion.VERSION_1_8
             targetCompatibility = JavaVersion.VERSION_1_8
-
-            // Enables desugaring for Java 8+ APIs // ! Not Working for minSdk = 21
-            // isCoreLibraryDesugaringEnabled = true
         }
 
         tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
@@ -75,18 +72,15 @@ subprojects {
         // Stubs for all Cloudstream classes
         apk("com.lagradost:cloudstream3:pre-release")
 
-        // Enables desugaring for Java 8+ APIs // ! Not Working for minSdk = 21
-        // implementation("com.android.tools:desugar_jdk_libs:1.1.6")
-
         // these dependencies can include any of those which are added by the app,
         // but you dont need to include any of them if you dont need them
         // https://github.com/recloudstream/cloudstream/blob/master/app/build.gradle
         implementation(kotlin("stdlib"))                                              // Kotlin'in temel kütüphanesi
-        implementation("com.github.Blatzar:NiceHttp:0.4.4")                           // HTTP kütüphanesi
-        implementation("org.jsoup:jsoup:1.17.2")                                      // HTML ayrıştırıcı
-        implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.0")   // Kotlin için Jackson JSON kütüphanesi
-        implementation("com.fasterxml.jackson.core:jackson-databind:2.16.0")          // JSON-nesne dönüştürme kütüphanesi
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")      // Kotlin için asenkron işlemler
+        implementation("com.github.Blatzar:NiceHttp:0.4.11")                          // HTTP kütüphanesi
+        implementation("org.jsoup:jsoup:1.18.3")                                      // HTML ayrıştırıcı
+        implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.2")   // Kotlin için Jackson JSON kütüphanesi
+        implementation("com.fasterxml.jackson.core:jackson-databind:2.18.2")          // JSON-nesne dönüştürme kütüphanesi
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1")     // Kotlin için asenkron işlemler
     }
 }
 
