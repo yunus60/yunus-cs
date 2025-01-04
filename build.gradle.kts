@@ -10,10 +10,10 @@ buildscript {
     }
 
     dependencies {
-        classpath("com.android.tools.build:gradle:7.4.0")
+        classpath("com.android.tools.build:gradle:7.2.2")
         // Cloudstream gradle plugin which makes everything work and builds plugins
         classpath("com.github.recloudstream:gradle:-SNAPSHOT")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.21")
     }
 }
 
@@ -43,7 +43,7 @@ subprojects {
 
     android {
         defaultConfig {
-            minSdk = 26
+            minSdk = 21
             compileSdkVersion(33)
             targetSdk = 33
         }
@@ -82,8 +82,8 @@ subprojects {
         // but you dont need to include any of them if you dont need them
         // https://github.com/recloudstream/cloudstream/blob/master/app/build.gradle
         implementation(kotlin("stdlib"))                                              // Kotlin'in temel kütüphanesi
-        implementation("com.github.Blatzar:NiceHttp:0.4.11")                          // HTTP kütüphanesi
-        implementation("org.jsoup:jsoup:1.18.1")                                      // HTML ayrıştırıcı
+        implementation("com.github.Blatzar:NiceHttp:0.4.4")                           // HTTP kütüphanesi
+        implementation("org.jsoup:jsoup:1.17.2")                                      // HTML ayrıştırıcı
         implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.16.0")   // Kotlin için Jackson JSON kütüphanesi
         implementation("com.fasterxml.jackson.core:jackson-databind:2.16.0")          // JSON-nesne dönüştürme kütüphanesi
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")      // Kotlin için asenkron işlemler
