@@ -103,7 +103,7 @@ class TurkAnime : MainAPI() {
             bolumlerUrl,
             headers = mapOf(
                 "X-Requested-With" to "XMLHttpRequest",
-                "token"            to document.selectFirst("meta[name='_token']").attr("content")
+                "token"            to document.selectFirst("meta[name='_token']")!!.attr("content")
             ),
             cookies = mapOf("yasOnay" to "1")
         ).document

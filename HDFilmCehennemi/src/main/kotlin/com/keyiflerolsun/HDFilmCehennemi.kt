@@ -91,7 +91,7 @@ class HDFilmCehennemi : MainAPI() {
         val description = document.selectFirst("article.post-info-content > p")?.text()?.trim()
         val rating      = document.selectFirst("div.post-info-imdb-rating span")?.text()?.substringBefore("(")?.trim()?.toRatingInt()
         val actors      = document.select("div.post-info-cast a").map {
-            Actor(it.selectFirst("strong").text(), it.select("img").attr("data-src"))
+            Actor(it.selectFirst("strong")!!.text(), it.select("img")!!.attr("data-src"))
         }
 
         val recommendations = document.select("div.section-slider-container div.slider-slide").mapNotNull {

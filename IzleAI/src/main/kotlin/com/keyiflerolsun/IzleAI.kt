@@ -120,7 +120,7 @@ class IzleAI : MainAPI() {
 
         val title       = document.selectFirst("div.gap-3.pt-5 h2")?.text() ?: return null
         val poster      = fixUrlNull(document.selectFirst("div.col-span-2 img")?.attr("data-src"))
-        val year        = document.selectFirst("a[href*='/yil/']").text()?.toIntOrNull()
+        val year        = document.selectFirst("a[href*='/yil/']")?.text()?.toIntOrNull()
         val description = document.selectFirst("div.mv-det-p")?.text()?.trim() ?: document.selectFirst("div.w-full div.text-base")?.text()?.trim()
         val tags        = document.select("[href*='kategori']").map { it.text() }
         val rating      = document.selectFirst("a[href*='imdb.com'] span.font-bold")?.text()?.trim().toRatingInt()

@@ -172,7 +172,7 @@ class SetFilmIzle : MainAPI() {
             if (sourceId.contains("event")) return@forEach
 
             val sourceDoc    = app.get("${mainUrl}/play/play.php?ser=${sourceId}&name=${name}&partKey=${partKey}", referer=data).document
-            val sourceIframe = sourceDoc.selectFirst("iframe").attr("src")
+            val sourceIframe = sourceDoc.selectFirst("iframe")?.attr("src") ?: return@forEach
             Log.d("STF", "iframe » ${sourceIframe}")
 
             if (sourceIframe.contains("explay.store") || sourceIframe.contains("setplay.site")) {
