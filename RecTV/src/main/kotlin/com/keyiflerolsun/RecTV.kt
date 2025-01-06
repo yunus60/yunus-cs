@@ -176,7 +176,7 @@ class RecTV : MainAPI() {
             Log.d("RCTV", "source » ${source}")
             callback.invoke(
                 ExtractorLink(
-                    source  = "${this.name} - ${source.type}",
+                    source  = "${this.name}",
                     name    = "${this.name} - ${source.type}",
                     url     = source.url,
                     headers = mapOf(
@@ -201,7 +201,7 @@ class RecTV : MainAPI() {
 
             // Modify the User-Agent header
             val newRequest = originalRequest.newBuilder()
-                .header("User-Agent", "YourCustomUserAgent")  // Set the custom User-Agent here
+                .header("User-Agent", "googleusercontent")  // Set the custom User-Agent here
                 .build()
 
             // Proceed with the modified request
