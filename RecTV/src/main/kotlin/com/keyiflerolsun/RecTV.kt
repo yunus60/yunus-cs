@@ -7,6 +7,8 @@ import android.util.Log
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import okhttp3.Interceptor
+import okhttp3.Request
 
 class RecTV : MainAPI() {
     override var mainUrl              = "https://b.prectv14.sbs"
@@ -190,5 +192,20 @@ class RecTV : MainAPI() {
         }
 
         return true
+    }
+
+    override fun getVideoInterceptor(extractorLink: ExtractorLink): Interceptor {
+        return Interceptor { chain ->
+            // Get the original request
+            val originalRequest: Request = chain.request()
+
+            // Modify the User-Agent header
+            val newRequest = originalRequest.newBuilder()
+                .header("User-Agent", "YourCustomUserAgent")  // Set the custom User-Agent here
+                .build()
+
+            // Proceed with the modified request
+            chain.proceed(newRequest)
+        }
     }
 }
