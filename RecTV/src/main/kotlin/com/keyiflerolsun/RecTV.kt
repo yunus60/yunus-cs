@@ -158,7 +158,6 @@ class RecTV : MainAPI() {
                     name    = "${this.name}",
                     url     = data,
                     headers = mapOf(
-                        "User-Agent"      to "googleusercontent",
                         "origin"          to "https://twitter.com",
                         "Accept-Encoding" to "gzip",
                     ),
@@ -180,7 +179,6 @@ class RecTV : MainAPI() {
                     name    = "${this.name} - ${source.type}",
                     url     = source.url,
                     headers = mapOf(
-                        "User-Agent"      to "googleusercontent",
                         "origin"          to "https://twitter.com",
                         "Accept-Encoding" to "gzip",
                     ),
