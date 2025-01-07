@@ -9,6 +9,7 @@ import com.lagradost.cloudstream3.utils.*
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import okhttp3.Interceptor
 import okhttp3.Request
+import okhttp3.Response
 
 class RecTV : MainAPI() {
     override var mainUrl              = "https://b.prectv14.sbs"
@@ -158,6 +159,7 @@ class RecTV : MainAPI() {
                     name    = "${this.name}",
                     url     = data,
                     headers = mapOf(
+                        "user-agent" to "googleusercontent",
                         "origin"          to "https://twitter.com",
                         "Accept-Encoding" to "gzip",
                     ),
@@ -179,6 +181,7 @@ class RecTV : MainAPI() {
                     name    = "${this.name} - ${source.type}",
                     url     = source.url,
                     headers = mapOf(
+                        "user-agent" to "googleusercontent",
                         "origin"          to "https://twitter.com",
                         "Accept-Encoding" to "gzip",
                     ),
@@ -193,13 +196,18 @@ class RecTV : MainAPI() {
     }
 
     override fun getVideoInterceptor(extractorLink: ExtractorLink): Interceptor {
-        return Interceptor { chain ->
-            val originalRequest: Request = chain.request()
-            val newRequest = originalRequest.newBuilder()
-                .removeHeader("User-Agent")
-                .addHeader("User-Agent", "googleusercontent")
-                .build()
-            chain.proceed(newRequest)
-        }
+        return UserAgentInterceptor()
     }
 }
+
+private class UserAgentInterceptor : Interceptor {
+    override fun intercept(chain: Interceptor.Chain): Response {
+        return chain.proceed(
+            chain.request()
+                .newBuilder()
+                .removeHeader("user-agent")
+                .build()
+        )
+    }
+}
+
