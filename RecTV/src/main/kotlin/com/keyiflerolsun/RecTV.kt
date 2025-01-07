@@ -196,15 +196,11 @@ class RecTV : MainAPI() {
 
     override fun getVideoInterceptor(extractorLink: ExtractorLink): Interceptor {
         return Interceptor { chain ->
-            // Get the original request
             val originalRequest: Request = chain.request()
-
-            // Modify the User-Agent header
             val newRequest = originalRequest.newBuilder()
-                .header("User-Agent", "googleusercontent")  // Set the custom User-Agent here
+                .removeHeader("User-Agent")
+                .addHeader("User-Agent", "googleusercontent")
                 .build()
-
-            // Proceed with the modified request
             chain.proceed(newRequest)
         }
     }
