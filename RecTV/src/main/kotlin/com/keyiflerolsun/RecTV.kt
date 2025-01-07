@@ -8,7 +8,6 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import okhttp3.Interceptor
-import okhttp3.Request
 import okhttp3.Response
 
 class RecTV : MainAPI() {
@@ -196,6 +195,7 @@ class RecTV : MainAPI() {
     }
 
     override fun getVideoInterceptor(extractorLink: ExtractorLink): Interceptor {
+        Log.d("Testing",extractorLink.toString())
         return UserAgentInterceptor()
     }
 }
