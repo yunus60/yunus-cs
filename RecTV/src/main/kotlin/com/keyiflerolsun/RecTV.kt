@@ -158,7 +158,6 @@ class RecTV : MainAPI() {
                     name    = "${this.name}",
                     url     = data,
                     headers = mapOf(
-                        "user-agent" to "googleusercontent",
                         "origin"          to "https://twitter.com",
                         "Accept-Encoding" to "gzip",
                     ),
@@ -180,7 +179,6 @@ class RecTV : MainAPI() {
                     name    = "${this.name} - ${source.type}",
                     url     = source.url,
                     headers = mapOf(
-                        "user-agent" to "googleusercontent",
                         "origin"          to "https://twitter.com",
                         "Accept-Encoding" to "gzip",
                     ),
@@ -195,19 +193,17 @@ class RecTV : MainAPI() {
     }
 
     override fun getVideoInterceptor(extractorLink: ExtractorLink): Interceptor {
-        Log.d("Testing",extractorLink.toString())
-        return UserAgentInterceptor()
-    }
-}
-
-private class UserAgentInterceptor : Interceptor {
-    override fun intercept(chain: Interceptor.Chain): Response {
-        return chain.proceed(
-            chain.request()
-                .newBuilder()
+        val interceptor = Interceptor { chain ->
+            val originalRequest = chain.request()
+            val modifiedRequest = originalRequest.newBuilder()
                 .removeHeader("user-agent")
+                .removeHeader("User-Agent")
+                .header("User-Agent", "googleusercontent")
                 .build()
-        )
+            Log.d("Testing",modifiedRequest.headers.toString())
+            chain.proceed(modifiedRequest)
+        }
+        return interceptor
     }
 }
 
