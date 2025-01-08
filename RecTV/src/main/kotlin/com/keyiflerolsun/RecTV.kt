@@ -161,7 +161,13 @@ class RecTV : MainAPI() {
                         "user-agent" to "googleusercontent",
                         "origin"          to "https://twitter.com",
                         "Accept-Encoding" to "gzip",
-                        "If-None-Match" to ""
+                        "If-None-Match" to "",
+                        "accept" to "*/*",
+                        "sec-ch-ua" to "\"Chromium\";v=\"91\", \" Not;A Brand\";v=\"99\"",
+                        "sec-ch-ua-mobile" to "?0",
+                        "sec-fetch-user" to "?1",
+                        "sec-fetch-mode" to "navigate",
+                        "sec-fetch-dest" to "video"
                     ),
                     referer = "https://twitter.com/",
                     quality = Qualities.Unknown.value,
@@ -184,7 +190,13 @@ class RecTV : MainAPI() {
                         "user-agent" to "googleusercontent",
                         "origin"          to "https://twitter.com",
                         "Accept-Encoding" to "gzip",
-                        "If-None-Match" to ""
+                        "If-None-Match" to "",
+                        "accept" to "*/*",
+                        "sec-ch-ua" to "\"Chromium\";v=\"91\", \" Not;A Brand\";v=\"99\"",
+                        "sec-ch-ua-mobile" to "?0",
+                        "sec-fetch-user" to "?1",
+                        "sec-fetch-mode" to "navigate",
+                        "sec-fetch-dest" to "video"
                     ),
                     referer = "https://twitter.com/",
                     quality = Qualities.Unknown.value,
