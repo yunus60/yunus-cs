@@ -158,6 +158,7 @@ class RecTV : MainAPI() {
                     name    = "${this.name}",
                     url     = data,
                     headers = mapOf(
+                        "user-agent" to "googleusercontent",
                         "origin"          to "https://twitter.com",
                         "Accept-Encoding" to "gzip",
                     ),
@@ -179,6 +180,7 @@ class RecTV : MainAPI() {
                     name    = "${this.name} - ${source.type}",
                     url     = source.url,
                     headers = mapOf(
+                        "user-agent" to "googleusercontent",
                         "origin"          to "https://twitter.com",
                         "Accept-Encoding" to "gzip",
                     ),
@@ -196,11 +198,8 @@ class RecTV : MainAPI() {
         val interceptor = Interceptor { chain ->
             val originalRequest = chain.request()
             val modifiedRequest = originalRequest.newBuilder()
-                .removeHeader("user-agent")
-                .removeHeader("User-Agent")
                 .header("User-Agent", "googleusercontent")
                 .build()
-            Log.d("Testing",modifiedRequest.headers.toString())
             chain.proceed(modifiedRequest)
         }
         return interceptor
