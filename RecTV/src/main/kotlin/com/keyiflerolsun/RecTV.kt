@@ -161,6 +161,7 @@ class RecTV : MainAPI() {
                         "user-agent" to "googleusercontent",
                         "origin"          to "https://twitter.com",
                         "Accept-Encoding" to "gzip",
+                        "If-None-Match" to ""
                     ),
                     referer = "https://twitter.com/",
                     quality = Qualities.Unknown.value,
@@ -183,6 +184,7 @@ class RecTV : MainAPI() {
                         "user-agent" to "googleusercontent",
                         "origin"          to "https://twitter.com",
                         "Accept-Encoding" to "gzip",
+                        "If-None-Match" to ""
                     ),
                     referer = "https://twitter.com/",
                     quality = Qualities.Unknown.value,
@@ -199,6 +201,7 @@ class RecTV : MainAPI() {
             val originalRequest = chain.request()
             val modifiedRequest = originalRequest.newBuilder()
                 .removeHeader("If-None-Match")
+                .header("If-None-Match","")
                 .header("User-Agent", "googleusercontent")
                 .build()
             chain.proceed(modifiedRequest)
