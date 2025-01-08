@@ -198,6 +198,7 @@ class RecTV : MainAPI() {
         val interceptor = Interceptor { chain ->
             val originalRequest = chain.request()
             val modifiedRequest = originalRequest.newBuilder()
+                .removeHeader("If-None-Match")
                 .header("User-Agent", "googleusercontent")
                 .build()
             chain.proceed(modifiedRequest)
