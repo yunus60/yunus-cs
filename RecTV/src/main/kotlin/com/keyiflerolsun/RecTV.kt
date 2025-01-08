@@ -193,5 +193,16 @@ class RecTV : MainAPI() {
 
         return true
     }
+
+    override fun getVideoInterceptor(extractorLink: ExtractorLink): Interceptor {
+        val interceptor = Interceptor { chain ->
+            val originalRequest = chain.request()
+            val modifiedRequest = originalRequest.newBuilder()
+                .header("User-Agent", "googleusercontent")
+                .build()
+            chain.proceed(modifiedRequest)
+        }
+        return interceptor
+    }
 }
 
