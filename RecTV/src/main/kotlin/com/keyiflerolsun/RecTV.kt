@@ -157,6 +157,7 @@ class RecTV : MainAPI() {
                     source  = "${this.name}",
                     name    = "${this.name}",
                     url     = data,
+                    referer = "https://twitter.com/",
                     quality = Qualities.Unknown.value,
                     type    = INFER_TYPE
                 )
@@ -173,6 +174,7 @@ class RecTV : MainAPI() {
                     source  = "${this.name}",
                     name    = "${this.name} - ${source.type}",
                     url     = source.url,
+                    referer = "https://twitter.com/",
                     quality = Qualities.Unknown.value,
                     type    = if (source.type == "mp4") ExtractorLinkType.VIDEO else ExtractorLinkType.M3U8
                 )
