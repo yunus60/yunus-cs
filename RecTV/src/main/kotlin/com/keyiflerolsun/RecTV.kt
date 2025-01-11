@@ -157,19 +157,6 @@ class RecTV : MainAPI() {
                     source  = "${this.name}",
                     name    = "${this.name}",
                     url     = data,
-                    headers = mapOf(
-                        "user-agent" to "googleusercontent",
-                        "origin"          to "https://twitter.com",
-                        "Accept-Encoding" to "gzip",
-                        "If-None-Match" to "",
-                        "accept" to "*/*",
-                        "sec-ch-ua" to "\"Chromium\";v=\"91\", \" Not;A Brand\";v=\"99\"",
-                        "sec-ch-ua-mobile" to "?0",
-                        "sec-fetch-user" to "?1",
-                        "sec-fetch-mode" to "navigate",
-                        "sec-fetch-dest" to "video"
-                    ),
-                    referer = "https://twitter.com/",
                     quality = Qualities.Unknown.value,
                     type    = INFER_TYPE
                 )
@@ -186,19 +173,6 @@ class RecTV : MainAPI() {
                     source  = "${this.name}",
                     name    = "${this.name} - ${source.type}",
                     url     = source.url,
-                    headers = mapOf(
-                        "user-agent" to "googleusercontent",
-                        "origin"          to "https://twitter.com",
-                        "Accept-Encoding" to "gzip",
-                        "If-None-Match" to "",
-                        "accept" to "*/*",
-                        "sec-ch-ua" to "\"Chromium\";v=\"91\", \" Not;A Brand\";v=\"99\"",
-                        "sec-ch-ua-mobile" to "?0",
-                        "sec-fetch-user" to "?1",
-                        "sec-fetch-mode" to "navigate",
-                        "sec-fetch-dest" to "video"
-                    ),
-                    referer = "https://twitter.com/",
                     quality = Qualities.Unknown.value,
                     type    = if (source.type == "mp4") ExtractorLinkType.VIDEO else ExtractorLinkType.M3U8
                 )
@@ -213,7 +187,6 @@ class RecTV : MainAPI() {
             val originalRequest = chain.request()
             val modifiedRequest = originalRequest.newBuilder()
                 .removeHeader("If-None-Match")
-                .header("If-None-Match","")
                 .header("User-Agent", "googleusercontent")
                 .build()
             chain.proceed(modifiedRequest)
