@@ -31,7 +31,7 @@ class AnimeciX : MainAPI() {
         val home     = response?.pagination?.data?.mapNotNull { anime ->
             newAnimeSearchResponse(
                 anime.title,
-                "${mainUrl}/secure/titles/${anime.id}?titleId=${anime.id}",
+                "${mainUrl}/secure/titles/${anime.id}?titleId=${anime.id}&titleName=${uselessTitleName}",
                 TvType.Anime
             ) {
                 this.posterUrl = fixUrlNull(anime.poster)
