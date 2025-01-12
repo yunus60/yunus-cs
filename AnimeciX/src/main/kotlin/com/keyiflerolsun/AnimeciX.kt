@@ -31,7 +31,7 @@ class AnimeciX : MainAPI() {
         val home     = response?.pagination?.data?.mapNotNull { anime ->
             newAnimeSearchResponse(
                 anime.title,
-                "${mainUrl}/secure/titles/${anime.id}?titleId=${anime.id}&titleName=${uselessTitleName}",
+                "${mainUrl}/secure/titles/${anime.id}?titleId=${anime.id}",
                 TvType.Anime
             ) {
                 this.posterUrl = fixUrlNull(anime.poster)
@@ -47,7 +47,7 @@ class AnimeciX : MainAPI() {
         return response.results.mapNotNull { anime ->
             newAnimeSearchResponse(
                 anime.title,
-                "${mainUrl}/secure/titles/${anime.id}?titleId=${anime.id}&titleName=${uselessTitleName}",
+                "${mainUrl}/secure/titles/${anime.id}?titleId=${anime.id}",
                 TvType.Anime
             ) {
                 this.posterUrl = fixUrlNull(anime.poster)
