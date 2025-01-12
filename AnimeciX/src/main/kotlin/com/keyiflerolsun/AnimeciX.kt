@@ -11,8 +11,8 @@ import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 class AnimeciX : MainAPI() {
     override var mainUrl              = "https://animecix.net"
     override var sequentialMainPage = true
-    override var sequentialMainPageDelay = 200
-    override var sequentialMainPageScrollDelay = 200
+    override var sequentialMainPageDelay = 200L
+    override var sequentialMainPageScrollDelay = 200L
     override var name                 = "AnimeciX"
     override val hasMainPage          = true
     override var lang                 = "tr"
