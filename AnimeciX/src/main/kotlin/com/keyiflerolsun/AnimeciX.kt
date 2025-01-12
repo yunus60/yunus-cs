@@ -28,7 +28,7 @@ class AnimeciX : MainAPI() {
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        val response = app.get("${request.data}&page=${page}&perPage=12").parsedSafe<Category>()
+        val response = app.get("${request.data}&page=${page}&perPage=16").parsedSafe<Category>()
 
         val home     = response?.pagination?.data?.mapNotNull { anime ->
             newAnimeSearchResponse(
