@@ -60,7 +60,7 @@ class AnimeciX : MainAPI() {
     override suspend fun load(url: String): LoadResponse? {
         val titleId  = url.substringAfter("?titleId=")
         val uselessResponse = app.get("${mainUrl}/titles/${titleId}/${uselessTitleName}")
-        val response = app.get(url).parsedSafe<Title>() ?: return null
+        val response = app.get("${url}&titleName=${uselessTitleName}").parsedSafe<Title>() ?: return null
 
         val episodes = mutableListOf<Episode>()
         
