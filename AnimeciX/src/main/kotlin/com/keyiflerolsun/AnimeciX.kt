@@ -19,12 +19,11 @@ class AnimeciX : MainAPI() {
     override val supportedTypes       = setOf(TvType.Anime)
 
     override val mainPage = mainPageOf(
-        "${mainUrl}/secure/titles?type=series&order=user_score:desc&genre=action&onlyStreamable=true"          to "Aksiyon",
-        "${mainUrl}/secure/titles?type=series&order=user_score:desc&genre=sci-fi-fantasy&onlyStreamable=true"  to "Bilim Kurgu",
-        "${mainUrl}/secure/titles?type=series&order=user_score:desc&genre=drama&onlyStreamable=true"           to "Dram",
-        "${mainUrl}/secure/titles?type=series&order=user_score:desc&genre=mystery&onlyStreamable=true"         to "Gizem",
-        "${mainUrl}/secure/titles?type=series&order=user_score:desc&genre=comedy&onlyStreamable=true"          to "Komedi",
-        "${mainUrl}/secure/titles?type=series&order=user_score:desc&genre=horror&onlyStreamable=true"          to "Korku"
+        "${mainUrl}/secure/titles?genre=action&onlyStreamable=true"          to "Aksiyon",
+        "${mainUrl}/secure/titles?genre=science%20fiction&onlyStreamable=true"  to "Bilim Kurgu",
+        "${mainUrl}/secure/titles?genre=drama&onlyStreamable=true"           to "Dram",
+        "${mainUrl}/secure/titles?genre=magic&onlyStreamable=true"          to "Büyü",
+        "${mainUrl}/secure/titles?genre=isekai&onlyStreamable=true"          to "İsekai"
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
