@@ -1,9 +1,9 @@
-version = 2
+version = 3
 
 cloudstream {
     authors     = listOf("keyiflerolsun")
     language    = "tr"
-    description = "!!! Devredışı !!! AnimeciX, animeleri keşfedebileceğiniz ve animeler hakkında her şeyi öğrenebileceğiniz bir paylaşım platformudur."
+    description = "AnimeciX, animeleri keşfedebileceğiniz ve animeler hakkında her şeyi öğrenebileceğiniz bir paylaşım platformudur."
 
     /**
      * Status int as the following:

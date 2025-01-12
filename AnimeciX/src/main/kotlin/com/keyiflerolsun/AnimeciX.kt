@@ -10,9 +10,6 @@ import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 
 class AnimeciX : MainAPI() {
     override var mainUrl              = "https://animecix.net"
-    override var sequentialMainPage = true
-    override var sequentialMainPageDelay = 200L
-    override var sequentialMainPageScrollDelay = 200L
     override var name                 = "AnimeciX"
     override val hasMainPage          = true
     override var lang                 = "tr"
@@ -21,14 +18,22 @@ class AnimeciX : MainAPI() {
     override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Anime)
 
-    //Animecix'in filtreleme özelliği kendi sitesinde bile düzgün çalışmıyor o yüzden türleri kaldırdım.
+    override var sequentialMainPage = true        // * https://recloudstream.github.io/dokka/-cloudstream/com.lagradost.cloudstream3/-main-a-p-i/index.html#-2049735995%2FProperties%2F101969414
+    override var sequentialMainPageDelay       = 200L  // ? 0.20 saniye
+    override var sequentialMainPageScrollDelay = 200L  // ? 0.20 saniye
+
     override val mainPage = mainPageOf(
-        "${mainUrl}/secure/titles?type=series&onlyStreamable=true"          to "Seriler",
+        "${mainUrl}/secure/titles?type=series&onlyStreamable=true" to "Seriler",
         "${mainUrl}/secure/titles?type=movie&onlyStreamable=true"  to "Filmler",
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        val response = app.get("${request.data}&page=${page}&perPage=16", headers=mapOf("x-e-h" to "7Y2ozlO+QysR5w9Q6Tupmtvl9jJp7ThFH8SB+Lo7NvZjgjqRSqOgcT2v4ISM9sP10LmnlYI8WQ==.xrlyOBFS5BHjQ2Lk")).parsedSafe<Category>()
+        val response = app.get(
+            "${request.data}&page=${page}&perPage=16",
+            headers = mapOf(
+                "x-e-h" to "7Y2ozlO+QysR5w9Q6Tupmtvl9jJp7ThFH8SB+Lo7NvZjgjqRSqOgcT2v4ISM9sP10LmnlYI8WQ==.xrlyOBFS5BHjQ2Lk"
+            )
+        ).parsedSafe<Category>()
 
         val home     = response?.pagination?.data?.mapNotNull { anime ->
             newAnimeSearchResponse(
@@ -60,11 +65,15 @@ class AnimeciX : MainAPI() {
     override suspend fun quickSearch(query: String): List<SearchResponse> = search(query)
 
     override suspend fun load(url: String): LoadResponse? {
-        val titleId  = url.substringAfter("?titleId=")
-        val response = app.get(url, headers=mapOf("x-e-h" to "7Y2ozlO+QysR5w9Q6Tupmtvl9jJp7ThFH8SB+Lo7NvZjgjqRSqOgcT2v4ISM9sP10LmnlYI8WQ==.xrlyOBFS5BHjQ2Lk")).parsedSafe<Title>() ?: return null
+        val response = app.get(
+            url,
+            headers = mapOf(
+                "x-e-h" to "7Y2ozlO+QysR5w9Q6Tupmtvl9jJp7ThFH8SB+Lo7NvZjgjqRSqOgcT2v4ISM9sP10LmnlYI8WQ==.xrlyOBFS5BHjQ2Lk"
+            )
+        ).parsedSafe<Title>() ?: return null
 
         val episodes = mutableListOf<Episode>()
-        
+        val titleId  = url.substringAfter("?titleId=")
 
         if (response.title.title_type == "anime") {
             for (sezon in 1..response.title.season_count) {
