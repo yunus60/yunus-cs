@@ -7,6 +7,8 @@ import android.util.Log
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import okhttp3.Interceptor
+import okhttp3.Response
 
 class RecTV : MainAPI() {
     override var mainUrl              = "https://b.prectv14.sbs"
@@ -155,11 +157,6 @@ class RecTV : MainAPI() {
                     source  = "${this.name}",
                     name    = "${this.name}",
                     url     = data,
-                    headers = mapOf(
-                        "User-Agent"      to "googleusercontent",
-                        "origin"          to "https://twitter.com",
-                        "Accept-Encoding" to "gzip",
-                    ),
                     referer = "https://twitter.com/",
                     quality = Qualities.Unknown.value,
                     type    = INFER_TYPE
@@ -174,14 +171,9 @@ class RecTV : MainAPI() {
             Log.d("RCTV", "source » ${source}")
             callback.invoke(
                 ExtractorLink(
-                    source  = "${this.name} - ${source.type}",
+                    source  = "${this.name}",
                     name    = "${this.name} - ${source.type}",
                     url     = source.url,
-                    headers = mapOf(
-                        "User-Agent"      to "googleusercontent",
-                        "origin"          to "https://twitter.com",
-                        "Accept-Encoding" to "gzip",
-                    ),
                     referer = "https://twitter.com/",
                     quality = Qualities.Unknown.value,
                     type    = if (source.type == "mp4") ExtractorLinkType.VIDEO else ExtractorLinkType.M3U8
@@ -191,4 +183,17 @@ class RecTV : MainAPI() {
 
         return true
     }
+
+    override fun getVideoInterceptor(extractorLink: ExtractorLink): Interceptor {
+        val interceptor = Interceptor { chain ->
+            val originalRequest = chain.request()
+            val modifiedRequest = originalRequest.newBuilder()
+                .removeHeader("If-None-Match")
+                .header("User-Agent", "googleusercontent")
+                .build()
+            chain.proceed(modifiedRequest)
+        }
+        return interceptor
+    }
 }
+
