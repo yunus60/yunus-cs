@@ -17,6 +17,7 @@ class AnimeciX : MainAPI() {
     override val hasChromecastSupport = true
     override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Anime)
+    val uselessTitleName = "zumzumyehe"
 
     //Animecix'in filtreleme özelliği kendi sitesinde bile düzgün çalışmıyor o yüzden türleri kaldırdım.
     override val mainPage = mainPageOf(
@@ -46,7 +47,7 @@ class AnimeciX : MainAPI() {
         return response.results.mapNotNull { anime ->
             newAnimeSearchResponse(
                 anime.title,
-                "${mainUrl}/secure/titles/${anime.id}?titleId=${anime.id}",
+                "${mainUrl}/secure/titles/${anime.id}?titleId=${anime.id}&titleName=${uselessTitleName}",
                 TvType.Anime
             ) {
                 this.posterUrl = fixUrlNull(anime.poster)
@@ -57,10 +58,12 @@ class AnimeciX : MainAPI() {
     override suspend fun quickSearch(query: String): List<SearchResponse> = search(query)
 
     override suspend fun load(url: String): LoadResponse? {
+        val titleId  = url.substringAfter("?titleId=")
+        val uselessResponse = app.get("${mainUrl}/titles/${titleId}/${uselessTitleName}")
         val response = app.get(url).parsedSafe<Title>() ?: return null
 
         val episodes = mutableListOf<Episode>()
-        val titleId  = url.substringAfter("?titleId=")
+        
 
         if (response.title.title_type == "anime") {
             for (sezon in 1..response.title.season_count) {
