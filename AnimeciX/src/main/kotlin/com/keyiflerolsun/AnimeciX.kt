@@ -18,11 +18,10 @@ class AnimeciX : MainAPI() {
     override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Anime)
 
+    //Animecix'in filtreleme özelliği kendi sitesinde bile düzgün çalışmıyor o yüzden türleri kaldırdım.
     override val mainPage = mainPageOf(
-        "${mainUrl}/secure/titles?genre=action&onlyStreamable=true"          to "Aksiyon",
-        "${mainUrl}/secure/titles?genre=science%20fiction&onlyStreamable=true"  to "Bilim Kurgu",
-        "${mainUrl}/secure/titles?keyword=magic&onlyStreamable=true"          to "Büyü",
-        "${mainUrl}/secure/titles?keyword=isekai&onlyStreamable=true"          to "İsekai"
+        "${mainUrl}/secure/titles?type=series&onlyStreamable=true"          to "Seriler",
+        "${mainUrl}/secure/titles?type=movie&onlyStreamable=true"  to "Filmler",
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
