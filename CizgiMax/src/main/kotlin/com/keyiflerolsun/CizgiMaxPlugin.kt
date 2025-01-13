@@ -10,5 +10,7 @@ class CizgiMaxPlugin: Plugin() {
         registerMainAPI(CizgiMax())
         registerExtractorAPI(SibNet())
         registerExtractorAPI(CizgiDuo())
+        registerExtractorAPI(CizgiPass())
+        registerExtractorAPI(Drive())
     }
 }

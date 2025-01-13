@@ -7,7 +7,7 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.extractors.helper.AesHelper
 
-class CizgiDuo : ExtractorApi() {
+open class CizgiDuo : ExtractorApi() {
     override var name            = "CizgiDuo"
     override var mainUrl         = "https://cizgiduo.online"
     override val requiresReferer = true
