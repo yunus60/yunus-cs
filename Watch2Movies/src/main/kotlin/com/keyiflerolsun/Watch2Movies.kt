@@ -131,6 +131,16 @@ class Watch2Movies : MainAPI() {
             val dataSource = app.get("${mainUrl}/ajax/episode/sources/${dataId}", referer=data).parsedSafe<Sources>()
             Log.d("W2M", "iframe » ${dataSource!!.link}")
 
+            // ?   master  adb logcat -v tag | logcat-colorize | grep "W2M" 
+            // ! D   W2M      data   » https://watch2movies.net/movie/watch-ferry-2-full-118828
+            // * D   W2M      iframe » https://hanatyury.online/v2/embed-4/NDCSpcJUwFUT?z=
+            // * D   W2M      iframe » https://pepepeyo.xyz/v2/embed-4/MfDjL0xjrfrX?z=
+            // ! D   W2M      data   » https://watch2movies.net/movie/watch-adam-full-1542
+            // * D   W2M      iframe » https://hanatyury.online/v2/embed-4/0DMRS34RzDzF?z=
+            // * D   W2M      iframe » https://hanatyury.online/v2/embed-4/j3MXnGNwTkdx?z=
+            // * D   W2M      iframe » https://upstream.to/embed-tigfkb1a9wol.html
+            // * D   W2M      iframe » https://mixdrop.co/e/kn98qnk6h3k9wv
+
             // TODO: Extractors not coded yet » UpCloudExtractor.kt
             loadExtractor(dataSource!!.link, "${mainUrl}/", subtitleCallback, callback)
         }
