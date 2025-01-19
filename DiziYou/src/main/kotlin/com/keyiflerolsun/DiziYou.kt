@@ -113,17 +113,17 @@ class DiziYou : MainAPI() {
             val optName = it.text()
 
             if (optId == "turkceAltyazili") {
-                subTitles.add(DiziyouSubtitle("Turkish", "https://storage.diziyou.co/subtitles/${itemId}/tr.vtt"))
-                streamUrls.add(DiziyouStream("Orjinal Dil", "https://storage.diziyou.co/episodes/${itemId}/play.m3u8"))
+                subTitles.add(DiziyouSubtitle("Turkish", "https://storage.diziyou.live/subtitles/${itemId}/tr.vtt"))
+                streamUrls.add(DiziyouStream("Orjinal Dil", "https://storage.diziyou.live/episodes/${itemId}/play.m3u8"))
             }
 
             if (optId == "ingilizceAltyazili") {
-                subTitles.add(DiziyouSubtitle("English", "https://storage.diziyou.co/subtitles/${itemId}/en.vtt"))
-                streamUrls.add(DiziyouStream("Orjinal Dil", "https://storage.diziyou.co/episodes/${itemId}/play.m3u8"))
+                subTitles.add(DiziyouSubtitle("English", "https://storage.diziyou.live/subtitles/${itemId}/en.vtt"))
+                streamUrls.add(DiziyouStream("Orjinal Dil", "https://storage.diziyou.live/episodes/${itemId}/play.m3u8"))
             }
 
             if (optId == "turkceDublaj") {
-                streamUrls.add(DiziyouStream("Türkçe Dublaj", "https://storage.diziyou.co/episodes/${itemId}_tr/play.m3u8"))
+                streamUrls.add(DiziyouStream("Türkçe Dublaj", "https://storage.diziyou.live/episodes/${itemId}_tr/play.m3u8"))
             }
         }
 
