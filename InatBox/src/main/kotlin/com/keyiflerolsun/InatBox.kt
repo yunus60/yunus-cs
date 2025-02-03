@@ -2,67 +2,72 @@ package com.keyiflerolsun
 
 import android.util.Log
 import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.ui.player.ExtractorLinkGenerator
 import com.lagradost.cloudstream3.utils.*
-import kotlinx.coroutines.delay
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Interceptor
 import org.json.JSONArray
 import java.net.URI
-import java.util.*
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 import javax.crypto.spec.IvParameterSpec
 import java.util.Base64
 
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONException
 import org.json.JSONObject
 
 class InatBox : MainAPI() {
-    // URLs
-    private val contentUrl  = "https://dizibox.rest"
+    private val contentUrl = "https://dizibox.rest"
     private val categoryUrl = "https://dizilab.cfd"
 
-    // Provider details
-    override var name                 = "InatBox"
-    override val hasMainPage          = true
-    override var lang                 = "tr"
-    override val hasQuickSearch       = false
+    override var name = "InatBox"
+    override val hasMainPage = true
+    override var lang = "tr"
+    override val hasQuickSearch = true
     override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
-    override val supportedTypes       = setOf(TvType.Movie, TvType.TvSeries)
-
-    override var sequentialMainPage            = false // ! Might change in the future
-    override var sequentialMainPageDelay       = 100L
-    override var sequentialMainPageScrollDelay = 100L
+    override val hasDownloadSupport = true
+    override val supportedTypes = setOf(TvType.Movie, TvType.TvSeries)
+    override var sequentialMainPage = false // ! Might change in the future
 
     private val urlToSearchResponse = mutableMapOf<String, SearchResponse>()
-    private val urlToDescription    = mutableMapOf<String, String>()
+    private val aesKey = "ywevqtjrurkwtqgz" //This is used for both secret key and iv. This is the embedded master key for loading categories like sport channels.
 
-    // Main page categories
+    //This urls come from ${categoryUrl}/ct.php | I assume they won't change in the near future
     override val mainPage = mainPageOf(
-        "${contentUrl}/ex/index.php"           to "EXXEN",
-        "${contentUrl}/ga/index.php"           to "Gain",
-        "${contentUrl}/blu/index.php"          to "BluTV",
-        "${contentUrl}/nf/index.php"           to "Netflix",
-        "${contentUrl}/dsny/index.php"         to "Disney+",
-        "${contentUrl}/amz/index.php"          to "Amazon Prime",
-        "${contentUrl}/hb/index.php"           to "HBO Max",
-        "${contentUrl}/tbi/index.php"          to "Tabii",
-        "${contentUrl}/film/mubi.php"          to "Mubi",
-        "${contentUrl}/ccc/index.php"          to "TOD",
+        "https://boxbc.sbs/CDN/001_STR/boxbc.sbs/spor_v2.php" to "Spor Kanalları",
+        "${contentUrl}/ex/index.php" to "EXXEN",
+        "${contentUrl}/ga/index.php" to "Gain",
+        "${contentUrl}/blu/index.php" to "BluTV",
+        "${contentUrl}/nf/index.php" to "Netflix",
+        "${contentUrl}/dsny/index.php" to "Disney+",
+        "${contentUrl}/amz/index.php" to "Amazon Prime",
+        "${contentUrl}/hb/index.php" to "HBO Max",
+        "${contentUrl}/tbi/index.php" to "Tabii",
+        "${contentUrl}/film/mubi.php" to "Mubi",
+        "${contentUrl}/ccc/index.php" to "TOD",
         "${contentUrl}/yabanci-dizi/index.php" to "Yabancı Diziler",
-        "${contentUrl}/yerli-dizi/index.php"   to "Yerli Diziler",
+        "${contentUrl}/yerli-dizi/index.php" to "Yerli Diziler",
         "${contentUrl}/film/yerli-filmler.php" to "Yerli Filmler",
-        "${contentUrl}/film/4k-film-exo.php"   to "4K Film İzle | Exo"
+        "${contentUrl}/film/4k-film-exo.php" to "4K Film İzle | Exo"
     )
 
-    // AES key for decryption
-    private val randomAESKey = "C3V4HUpUbGDOjxEl"
+    override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
+        val jsonResponse =
+            makeInatRequest(request.data) ?: return newHomePageResponse(request.name, emptyList())
+
+        val searchResults = getSearchResponseList(jsonResponse)
+
+        for (searchResponse in searchResults) {
+            val url = searchResponse.url
+            if (!urlToSearchResponse.containsKey(url)) {
+                urlToSearchResponse[url] = searchResponse
+            }
+        }
+
+        // Return a HomePageResponse with the parsed results
+        return newHomePageResponse(request.name, searchResults)
+    }
+
 
     // Function to make an encrypted request
     private suspend fun makeInatRequest(url: String): String? {
@@ -75,25 +80,25 @@ class InatBox : MainAPI() {
         }
 
         val headers = mapOf(
-            "Cache-Control"    to "no-cache",
-            "Content-Length"   to "37",
-            "Content-Type"     to "application/x-www-form-urlencoded; charset=UTF-8",
-            "Host"             to hostName,
-            "Referer"          to "https://speedrestapi.com/",
+            "Cache-Control" to "no-cache",
+            "Content-Length" to "37",
+            "Content-Type" to "application/x-www-form-urlencoded; charset=UTF-8",
+            "Host" to hostName,
+            "Referer" to "https://speedrestapi.com/",
             "X-Requested-With" to "com.bp.box"
         )
 
-        val requestBody = "1=$randomAESKey&0=$randomAESKey"
+        val requestBody = "1=$aesKey&0=$aesKey"
 
         val interceptor = Interceptor { chain ->
-            val request    = chain.request()
+            val request = chain.request()
             val newRequest = request.newBuilder().header("User-Agent", "speedrestapi").build()
             chain.proceed(newRequest)
         }
 
         val response = app.post(
-            url         = url,
-            headers     = headers,
+            url = url,
+            headers = headers,
             requestBody = requestBody.toRequestBody(contentType = "application/x-www-form-urlencoded; charset=UTF-8".toMediaType()),
             interceptor = interceptor
         )
@@ -112,16 +117,17 @@ class InatBox : MainAPI() {
     private fun getJsonFromEncryptedInatResponse(response: String): String? {
         try {
             val algorithm = "AES/CBC/PKCS5Padding"
-            val keySpec   = SecretKeySpec(randomAESKey.toByteArray(), "AES")
+            val keySpec = SecretKeySpec(aesKey.toByteArray(), "AES")
 
             // First decryption iteration
             val cipher1 = Cipher.getInstance(algorithm)
-            cipher1.init(Cipher.DECRYPT_MODE, keySpec, IvParameterSpec(randomAESKey.toByteArray()))
-            val firstIterationData = cipher1.doFinal(Base64.getDecoder().decode(response.split(":")[0]))
+            cipher1.init(Cipher.DECRYPT_MODE, keySpec, IvParameterSpec(aesKey.toByteArray()))
+            val firstIterationData =
+                cipher1.doFinal(Base64.getDecoder().decode(response.split(":")[0]))
 
             // Second decryption iteration
             val cipher2 = Cipher.getInstance(algorithm)
-            cipher2.init(Cipher.DECRYPT_MODE, keySpec, IvParameterSpec(randomAESKey.toByteArray()))
+            cipher2.init(Cipher.DECRYPT_MODE, keySpec, IvParameterSpec(aesKey.toByteArray()))
             val secondIterationData = cipher2.doFinal(
                 Base64.getDecoder().decode(String(firstIterationData).split(":")[0])
             )
@@ -135,73 +141,57 @@ class InatBox : MainAPI() {
         }
     }
 
-    override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        // Fetch the data from the category URL
-        val jsonResponse = makeInatRequest(request.data) ?: return newHomePageResponse(request.name, emptyList())
-
-        // Parse the JSON response into a list of SearchResponse objects
-        val searchResults = parseJsonResponse(jsonResponse)
-
-        for (searchResponse in searchResults) {
-            val url = searchResponse.url
-            if (!urlToSearchResponse.containsKey(url)) {
-                urlToSearchResponse[url] = searchResponse
-            }
-        }
-
-        // Return a HomePageResponse with the parsed results
-        return newHomePageResponse(request.name, searchResults)
-    }
-
-    // Helper function to parse the JSON response
-    private fun parseJsonResponse(jsonResponse: String): List<SearchResponse> {
+    // Helper function to parse the JSON response and return SearchResponse list
+    private fun getSearchResponseList(jsonResponse: String): List<SearchResponse> {
         val searchResults = mutableListOf<SearchResponse>()
-
         try {
-            // Parse the JSON string into a list of maps
             val jsonArray = JSONArray(jsonResponse)
 
             for (i in 0 until jsonArray.length()) {
                 val item = jsonArray.getJSONObject(i)
 
-                // Check if the response contains diziType (TV series or movie)
+                if (!inatContentAllowed(item)) {
+                    continue
+                }
+
+                //Let's pass item directly to the next step
                 if (item.has("diziType")) {
-                    // Extract fields from the JSON object
-                    val name      = item.getString("diziName")
-                    if (name.contains("inattv")) { continue }
-                    val url       = item.getString("diziUrl")
-                    val type      = item.getString("diziType")
+                    val name = item.getString("diziName")
+                    val url = item.getString("diziUrl")
+                    val type = item.getString("diziType")
                     val posterUrl = item.getString("diziImg")
 
-                    // Create a SearchResponse based on the type
                     val searchResponse = when (type) {
-                        "dizi" -> newTvSeriesSearchResponse(name, url, TvType.TvSeries) {
+                        "dizi" -> newTvSeriesSearchResponse(name, item.toString()) {
                             this.posterUrl = posterUrl
                         }
 
-                        "film" -> newMovieSearchResponse(name, url, TvType.Movie) {
+                        "film" -> newMovieSearchResponse(name, item.toString()) {
                             this.posterUrl = posterUrl
                         }
 
                         else -> null // Ignore unsupported types
                     }
-
-                    // Add the SearchResponse to the list if it's not null
                     searchResponse?.let { searchResults.add(it) }
                 } else if (item.has("chName") && item.has("chUrl") && item.has("chImg")) {
                     // Handle the case where diziType is missing but chName, chUrl, and chImg are present
-                    val name      = item.getString("chName")
-                    if (name.contains("inattv")) { continue }
-                    var url       = item.getString("chUrl")
-                    if (!url.contains(contentUrl)) { url = item.toString() }
+                    val name = item.getString("chName")
+                    var url = item.getString("chUrl")
                     val posterUrl = item.getString("chImg")
+                    val chType = item.getString("chType")
 
-                    // Create a MovieSearchResponse
-                    val searchResponse = newMovieSearchResponse(name, url, TvType.Movie) {
-                        this.posterUrl = posterUrl
+                    val searchResponse = when (chType) {
+                        "live_url", "tekli_regex_lb_sh_3" -> newLiveSearchResponse(
+                            name,
+                            item.toString()
+                        ) {
+                            this.posterUrl = posterUrl
+                        }
+
+                        else -> newMovieSearchResponse(name, item.toString()) {
+                            this.posterUrl = posterUrl
+                        }
                     }
-
-                    // Add the SearchResponse to the list
                     searchResults.add(searchResponse)
                 }
             }
@@ -215,10 +205,10 @@ class InatBox : MainAPI() {
     override suspend fun search(query: String): List<SearchResponse> {
         if (urlToSearchResponse.isEmpty()) {
             for (pageData in mainPage) {
-                val url          = pageData.data
+                val url = pageData.data
                 val jsonResponse = makeInatRequest(url) ?: continue
 
-                val searchResults = parseJsonResponse(jsonResponse)
+                val searchResults = getSearchResponseList(jsonResponse)
 
                 for (searchResponse in searchResults) {
                     val contentUrl = searchResponse.url
@@ -226,8 +216,6 @@ class InatBox : MainAPI() {
                         urlToSearchResponse[contentUrl] = searchResponse
                     }
                 }
-
-                delay(sequentialMainPageDelay)
             }
         }
 
@@ -253,49 +241,112 @@ class InatBox : MainAPI() {
     }
 
     override suspend fun load(url: String): LoadResponse? {
-        if (url.startsWith("{")) {
-            val jsonObject = JSONObject(url)
-            val name       = jsonObject.getString("chName")
-            val dataUrl    = jsonObject.getString("chUrl")
-            val posterUrl  = jsonObject.getString("chImg")
+        val item = JSONObject(url)
 
-            return newMovieLoadResponse(name, dataUrl, TvType.Movie, dataUrl) {
-                this.posterUrl = posterUrl
-            }
-        }
-
-        // Fetch the data from the URL
-        val jsonResponse = makeInatRequest(url) ?: return null
-
-        // Parse the JSON response
-        val jsonArray = try {
-            JSONArray(jsonResponse)
-        } catch (e: Exception) {
-            Log.e("InatBox", "Failed to parse JSON response: ${e.message}")
+        if(!inatContentAllowed(item)){
             return null
         }
 
-        // Check if the response is for a TV series or a movie
-        return if (jsonArray.length() > 0 && jsonArray.getJSONObject(0).has("diziType")) {
-            // This is a TV series response
-            parseTvSeriesResponse(jsonArray, url)
+        if (item.has("diziType")) {
+            val name = item.getString("diziName")
+            val type = item.getString("diziType")
+
+            return when (type) {
+                "dizi" -> parseTvSeriesResponse(item)
+                "film" -> parseMovieResponse(item)
+                else -> null
+            }
+
+        } else if (item.has("chName") && item.has("chUrl") && item.has("chImg")) {
+            // Handle the case where diziType is missing but chName, chUrl, and chImg are present
+            val name = item.getString("chName")
+            val chType = item.getString("chType")
+
+            val loadResponse = when (chType) {
+                "live_url", "tekli_regex_lb_sh_3" -> parseLiveStreamLoadResponse(item)
+                else -> parseMovieResponse(item)
+            }
+            return loadResponse
         } else {
-            // This is a movie response
-            parseMovieResponse(jsonArray, url)
+            return null
+        }
+    }
+
+    override suspend fun loadLinks(
+        data: String,
+        isCasting: Boolean,
+        subtitleCallback: (SubtitleFile) -> Unit,
+        callback: (ExtractorLink) -> Unit
+    ): Boolean {
+        return try {
+            // Check if the data is a JSON array (for TV series episodes)
+            if (data.startsWith("[")) {
+                // Parse the JSON array
+                val sourcesJsonArray = JSONArray(data)
+
+                // Iterate over each source in the JSON array
+                for (i in 0 until sourcesJsonArray.length()) {
+                    val sourceJsonObject = sourcesJsonArray.getJSONObject(i)
+
+                    // Extract source details
+                    val sourceName = sourceJsonObject.optString("sourceName", "")
+                    var sourceUrl = sourceJsonObject.optString("sourceUrl")
+                    sourceUrl = sourceUrl.vkSourceFix()
+                    loadExtractor(sourceUrl, subtitleCallback, callback)
+                }
+            } else {
+                var sourceUrl = data
+                sourceUrl = sourceUrl.vkSourceFix()
+                val extractorFound = loadExtractor(sourceUrl, subtitleCallback, callback)
+
+                //When no extractor found, try to load it as stream
+                if (!extractorFound && sourceUrl.contains(".m3u8")) {
+                    callback.invoke(
+                        ExtractorLink(
+                            source = this.name,
+                            name = this.name,
+                            url = sourceUrl,
+                            referer = "https://google.com/",
+                            quality = Qualities.Unknown.value,
+                            type = ExtractorLinkType.M3U8
+                        )
+                    )
+                }
+            }
+            true
+        } catch (e: Exception) {
+            // Log detailed error information
+            Log.e(
+                "InatBox",
+                """
+            Failed to load links:
+            - Exception: ${e::class.simpleName}
+            - Message: ${e.message}
+            - Stack Trace: ${e.stackTrace.joinToString("\n")}
+            - Input Data: ${data.take(500)} (first 500 characters)
+            """.trimIndent()
+            )
+
+            false
         }
     }
 
     // Helper function to parse a TV series response
-    private suspend fun parseTvSeriesResponse(
-        jsonArray: JSONArray,
-        url: String
-    ): TvSeriesLoadResponse? {
+    private suspend fun parseTvSeriesResponse(item: JSONObject,tvType: TvType = TvType.TvSeries): TvSeriesLoadResponse? {
         // Map to store episodes grouped by season and episode number
         val episodeEntries = mutableMapOf<Pair<Int, Int>, MutableList<Episode>>()
-        val episodes       = mutableListOf<Episode>()
+        val episodes = mutableListOf<Episode>()
+
+        val url = item.getString("diziUrl")
+        val posterUrl = item.getString("diziImg")
+        val plot = item.getString("diziDetay")
+
+        val jsonResponse = makeInatRequest(url) ?: return null
+
+        val jsonArray = JSONArray(jsonResponse)
 
         // Get the SearchResponse for the given URL
-        val searchResponse = urlToSearchResponse[url]
+        val searchResponse = urlToSearchResponse[item.toString()]
 
         try {
             // Iterate over each season in the JSON array
@@ -304,12 +355,12 @@ class InatBox : MainAPI() {
 
                 // Extract season details
                 val seasonName = seasonItem.getString("diziName")
-                val seasonUrl  = seasonItem.getString("diziUrl")
-                val posterUrl  = seasonItem.getString("diziImg")
+                val seasonUrl = seasonItem.getString("diziUrl")
+                val posterUrl = seasonItem.getString("diziImg")
 
                 // Fetch the episode data for this season
                 val episodeResponse = makeInatRequest(seasonUrl) ?: continue
-                val episodeArray    = try {
+                val episodeArray = try {
                     JSONArray(episodeResponse)
                 } catch (e: Exception) {
                     Log.e("InatBox", "Failed to parse episode JSON for season: $seasonName", e)
@@ -324,13 +375,13 @@ class InatBox : MainAPI() {
 
                         // Extract episode details
                         val episodeName = episodeItem.getString("chName")
-                        val episodeUrl  = episodeItem.getString("chUrl")
+                        val episodeUrl = episodeItem.getString("chUrl")
 
                         // Extract season and episode numbers from the name (e.g., "S01 - 01.BÖLÜM")
                         val seasonEpisodeRegex = Regex("""S(\d+).*?(\d+).BÖLÜM""")
-                        val matchResult        = seasonEpisodeRegex.find(episodeName)
-                        val season             = matchResult?.groupValues?.get(1)?.toIntOrNull()
-                        val episode            = matchResult?.groupValues?.get(2)?.toIntOrNull()
+                        val matchResult = seasonEpisodeRegex.find(episodeName)
+                        val season = matchResult?.groupValues?.get(1)?.toIntOrNull()
+                        val episode = matchResult?.groupValues?.get(2)?.toIntOrNull()
 
                         if (season == null || episode == null) {
                             episodes.add(
@@ -342,9 +393,9 @@ class InatBox : MainAPI() {
                         } else {
                             // Create an Episode object
                             val episodeObj = Episode(
-                                data    = episodeUrl,
-                                name    = episodeName,
-                                season  = season,
+                                data = episodeUrl,
+                                name = episodeName,
+                                season = season,
                                 episode = episode
                             )
 
@@ -369,7 +420,7 @@ class InatBox : MainAPI() {
                 val sourcesJsonArray = JSONArray()
                 for (episodeObj in episodeList) {
                     val sourceName = episodeObj.name // Use the episode name as the source name
-                    val sourceUrl  = episodeObj.data
+                    val sourceUrl = episodeObj.data
 
                     // Create a JSON object for the source
                     val sourceJsonObject = JSONObject().apply {
@@ -384,8 +435,8 @@ class InatBox : MainAPI() {
                 // Create a new Episode object with the JSON array as the data
                 episodes.add(
                     Episode(
-                        data    = sourcesJsonArray.toString(), // Convert JSON array to string
-                        season  = season,
+                        data = sourcesJsonArray.toString(), // Convert JSON array to string
+                        season = season,
                         episode = episode
                     )
                 )
@@ -393,17 +444,18 @@ class InatBox : MainAPI() {
 
             // Get the name and poster URL from the first season
             val firstSeason = jsonArray.getJSONObject(0)
-            val posterUrl   = firstSeason.getString("diziImg")
+            val posterUrl = firstSeason.getString("diziImg")
 
             // Return a TvSeriesLoadResponse
             if (searchResponse != null) {
                 return newTvSeriesLoadResponse(
                     searchResponse.name,
                     url,
-                    TvType.TvSeries,
+                    tvType,
                     episodes
                 ) {
                     this.posterUrl = posterUrl
+                    this.plot = plot
                 }
             } else {
                 return null
@@ -419,72 +471,73 @@ class InatBox : MainAPI() {
         }
     }
 
-    override suspend fun loadLinks(
-        data: String,
-        isCasting: Boolean,
-        subtitleCallback: (SubtitleFile) -> Unit,
-        callback: (ExtractorLink) -> Unit
-    ): Boolean {
-        return try {
-            // Check if the data is a JSON array (for TV series episodes)
-            if (data.startsWith("[")) {
-                // Parse the JSON array
-                val sourcesJsonArray = JSONArray(data)
+    // Helper function to parse a movie response
+    private suspend fun parseMovieResponse(item: JSONObject): MovieLoadResponse? {
+        try {
+            if(item.has("diziType")){
+                val url = item.getString("diziUrl")
+                val posterUrl = item.getString("diziImg")
+                val plot = item.getString("diziDetay")
 
-                // Iterate over each source in the JSON array
-                for (i in 0 until sourcesJsonArray.length()) {
-                    val sourceJsonObject = sourcesJsonArray.getJSONObject(i)
+                val jsonResponse = makeInatRequest(url) ?: return null
 
-                    // Extract source details
-                    val sourceName = sourceJsonObject.optString("sourceName", "")
-                    var sourceUrl = sourceJsonObject.optString("sourceUrl")
-                    if (sourceUrl.startsWith("act")) {
-                        sourceUrl = "https://vk.com/al_video.php?${sourceUrl}"
-                    }
+                return newMovieLoadResponse(name,url,TvType.Movie,jsonResponse)
+            }else{
+                var url = item.getString("chUrl")
+                val posterUrl = item.getString("chImg")
 
-                    loadExtractor(sourceUrl, subtitleCallback, callback)
+                //val jsonResponse = makeInatRequest(url) ?: return null
+                //val firstItem = JSONObject(jsonResponse)
+                //val dataUrl = firstItem.getString("chUrl")
+
+                // Return a MovieLoadResponse
+                return newMovieLoadResponse(name, url, TvType.Movie, url) {
+                    this.posterUrl = posterUrl
                 }
-            } else {
-                loadExtractor(data, subtitleCallback, callback)
             }
-
-            // Return true to indicate success
-            true
         } catch (e: Exception) {
-            // Log detailed error information
-            Log.e(
-                "InatBox",
-                """
-            Failed to load links:
-            - Exception: ${e::class.simpleName}
-            - Message: ${e.message}
-            - Stack Trace: ${e.stackTrace.joinToString("\n")}
-            - Input Data: ${data.take(500)} (first 500 characters)
-            """.trimIndent()
-            )
-
-            // Return false to indicate failure
-            false
+            Log.e("InatBox", "Failed to parse movie response: ${e.message}")
+            return null
         }
     }
 
-    // Helper function to parse a movie response
-    private suspend fun parseMovieResponse(jsonArray: JSONArray, url: String): MovieLoadResponse? {
+    private suspend fun parseLiveStreamLoadResponse(item: JSONObject): LiveStreamLoadResponse? {
         try {
-            val firstItem = jsonArray.getJSONObject(0)
+            var url = item.getString("chUrl")
+            val posterUrl = item.getString("chImg")
 
-            // Extract fields from the JSON object
-            val name      = firstItem.getString("chName")
-            val dataUrl   = firstItem.getString("chUrl")
-            val posterUrl = firstItem.getString("chImg")
+            val jsonResponse = makeInatRequest(url) ?: return null
+            val firstItem = JSONObject(jsonResponse)
+            val dataUrl = firstItem.getString("chUrl")
 
             // Return a MovieLoadResponse
-            return newMovieLoadResponse(name, url, TvType.Movie, dataUrl) {
+            return newLiveStreamLoadResponse(name, url, dataUrl) {
                 this.posterUrl = posterUrl
             }
         } catch (e: Exception) {
             Log.e("InatBox", "Failed to parse movie response: ${e.message}")
             return null
         }
+    }
+
+    private fun inatContentAllowed(item: JSONObject): Boolean {
+        var type = ""
+        if (item.has("diziType")){
+            type = item.getString("diziType")
+
+        }else{
+            type = item.getString("chType")
+        }
+        return when(type){
+            "link","web" -> false
+            else -> true
+        }
+    }
+
+    private fun String.vkSourceFix(): String{
+        if (this.startsWith("act")) {
+            return "https://vk.com/al_video.php?${this}"
+        }
+        return this
     }
 }
