@@ -100,7 +100,7 @@ class InatBox : MainAPI() {
 
         if (response.isSuccessful) {
             val encryptedResponse = response.text
-            Log.d("InatBox", "Encrypted response: ${encryptedResponse}")
+            // Log.d("InatBox", "Encrypted response: ${encryptedResponse}")
             return getJsonFromEncryptedInatResponse(encryptedResponse)
         } else {
             Log.e("InatBox", "Request failed")
@@ -192,7 +192,8 @@ class InatBox : MainAPI() {
                     // Handle the case where diziType is missing but chName, chUrl, and chImg are present
                     val name      = item.getString("chName")
                     if (name.contains("inattv")) { continue }
-                    val url       = item.getString("chUrl")
+                    var url       = item.getString("chUrl")
+                    if (!url.contains(contentUrl)) { url = item.toString() }
                     val posterUrl = item.getString("chImg")
 
                     // Create a MovieSearchResponse
@@ -231,13 +232,20 @@ class InatBox : MainAPI() {
         }
 
         val matchingResults = mutableListOf<SearchResponse>()
+
+        val regex = try {
+            Regex(query, RegexOption.IGNORE_CASE)
+        } catch (e: Exception) {
+            Regex(Regex.escape(query), RegexOption.IGNORE_CASE)
+        }
+
         for ((_, searchResponse) in urlToSearchResponse) {
-            if (searchResponse.name.contains(query, ignoreCase = true)) {
+            if (regex.containsMatchIn(searchResponse.name)) {
                 matchingResults.add(searchResponse)
             }
         }
 
-        return matchingResults
+        return matchingResults.distinctBy { it.name }
     }
 
     override suspend fun quickSearch(query: String): List<SearchResponse> {
@@ -245,6 +253,17 @@ class InatBox : MainAPI() {
     }
 
     override suspend fun load(url: String): LoadResponse? {
+        if (url.startsWith("{")) {
+            val jsonObject = JSONObject(url)
+            val name       = jsonObject.getString("chName")
+            val dataUrl    = jsonObject.getString("chUrl")
+            val posterUrl  = jsonObject.getString("chImg")
+
+            return newMovieLoadResponse(name, dataUrl, TvType.Movie, dataUrl) {
+                this.posterUrl = posterUrl
+            }
+        }
+
         // Fetch the data from the URL
         val jsonResponse = makeInatRequest(url) ?: return null
 
