@@ -108,6 +108,8 @@ class KoreanTurk : MainAPI() {
                 newTvSeriesSearchResponse(title, href) {
                     this.posterUrl = ""
                 }
+            } else {
+                null
             }
         }
 
