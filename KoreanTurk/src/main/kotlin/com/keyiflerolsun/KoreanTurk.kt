@@ -99,16 +99,15 @@ class KoreanTurk : MainAPI() {
 
         val searchResults = document.select(".cat-item").mapNotNull {
             val title = it.text()
-            val href = it.firstElementChild()?.attr("href")
+            val href  = it.firstElementChild()?.attr("href")
+
             if (title.contains(query, ignoreCase = true) && href != null) {
-                //i don't want to put posterUrl because already their website slow and getting every page is time consuming
-                //val diziPage = app.get(href).document
-                //val posterUrl = diziPage.selectFirst("div.resimcik img")?.attr("src")?.removeSuffix("-60x60.jpg") + ".jpg" //Assuming every image has this res, might change in the future
+                // ! i don't want to put posterUrl because already their website slow and getting every page is time consuming
+                // * val diziPage  = app.get(href).document
+                // * val posterUrl = diziPage.selectFirst("div.resimcik img")?.attr("src")?.removeSuffix("-60x60.jpg") + ".jpg" //Assuming every image has this res, might change in the future
                 newTvSeriesSearchResponse(title, href) {
                     this.posterUrl = ""
                 }
-            } else {
-                null
             }
         }
 

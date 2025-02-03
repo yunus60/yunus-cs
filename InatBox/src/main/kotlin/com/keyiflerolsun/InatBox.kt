@@ -24,40 +24,41 @@ import org.json.JSONObject
 
 class InatBox : MainAPI() {
     // URLs
-    private val contentUrl = "https://dizibox.rest"
+    private val contentUrl  = "https://dizibox.rest"
     private val categoryUrl = "https://dizilab.cfd"
 
     // Provider details
-    override var name = "InatBox"
-    override val hasMainPage = true
-    override var lang = "tr"
-    override val hasQuickSearch = false
+    override var name                 = "InatBox"
+    override val hasMainPage          = true
+    override var lang                 = "tr"
+    override val hasQuickSearch       = false
     override val hasChromecastSupport = true
-    override val hasDownloadSupport = true
-    override val supportedTypes = setOf(TvType.Movie, TvType.TvSeries)
-    override var sequentialMainPage = false //Might change in the future
-    override var sequentialMainPageDelay = 100L
+    override val hasDownloadSupport   = true
+    override val supportedTypes       = setOf(TvType.Movie, TvType.TvSeries)
+
+    override var sequentialMainPage            = false // ! Might change in the future
+    override var sequentialMainPageDelay       = 100L
     override var sequentialMainPageScrollDelay = 100L
 
     private val urlToSearchResponse = mutableMapOf<String, SearchResponse>()
-    private val urlToDescription = mutableMapOf<String, String>()
+    private val urlToDescription    = mutableMapOf<String, String>()
 
     // Main page categories
     override val mainPage = mainPageOf(
-        "${contentUrl}/ex/index.php" to "EXXEN",
-        "${contentUrl}/ga/index.php" to "Gain",
-        "${contentUrl}/blu/index.php" to "BluTV",
-        "${contentUrl}/nf/index.php" to "Netflix",
-        "${contentUrl}/dsny/index.php" to "Disney+",
-        "${contentUrl}/amz/index.php" to "Amazon Prime",
-        "${contentUrl}/hb/index.php" to "HBO Max",
-        "${contentUrl}/tbi/index.php" to "Tabii",
-        "${contentUrl}/film/mubi.php" to "Mubi",
-        "${contentUrl}/ccc/index.php" to "TOD",
+        "${contentUrl}/ex/index.php"           to "EXXEN",
+        "${contentUrl}/ga/index.php"           to "Gain",
+        "${contentUrl}/blu/index.php"          to "BluTV",
+        "${contentUrl}/nf/index.php"           to "Netflix",
+        "${contentUrl}/dsny/index.php"         to "Disney+",
+        "${contentUrl}/amz/index.php"          to "Amazon Prime",
+        "${contentUrl}/hb/index.php"           to "HBO Max",
+        "${contentUrl}/tbi/index.php"          to "Tabii",
+        "${contentUrl}/film/mubi.php"          to "Mubi",
+        "${contentUrl}/ccc/index.php"          to "TOD",
         "${contentUrl}/yabanci-dizi/index.php" to "Yabancı Diziler",
-        "${contentUrl}/yerli-dizi/index.php" to "Yerli Diziler",
+        "${contentUrl}/yerli-dizi/index.php"   to "Yerli Diziler",
         "${contentUrl}/film/yerli-filmler.php" to "Yerli Filmler",
-        "${contentUrl}/film/4k-film-exo.php" to "4K Film İzle | Exo"
+        "${contentUrl}/film/4k-film-exo.php"   to "4K Film İzle | Exo"
     )
 
     // AES key for decryption
@@ -74,27 +75,25 @@ class InatBox : MainAPI() {
         }
 
         val headers = mapOf(
-            "Cache-Control" to "no-cache",
-            "Content-Length" to "37",
-            "Content-Type" to "application/x-www-form-urlencoded; charset=UTF-8",
-            "Host" to hostName,
-            "Referer" to "https://speedrestapi.com/",
+            "Cache-Control"    to "no-cache",
+            "Content-Length"   to "37",
+            "Content-Type"     to "application/x-www-form-urlencoded; charset=UTF-8",
+            "Host"             to hostName,
+            "Referer"          to "https://speedrestapi.com/",
             "X-Requested-With" to "com.bp.box"
         )
 
         val requestBody = "1=$randomAESKey&0=$randomAESKey"
 
         val interceptor = Interceptor { chain ->
-            val request = chain.request()
-            val newRequest = request.newBuilder()
-                .header("User-Agent", "speedrestapi")
-                .build()
+            val request    = chain.request()
+            val newRequest = request.newBuilder().header("User-Agent", "speedrestapi").build()
             chain.proceed(newRequest)
         }
 
         val response = app.post(
-            url = url,
-            headers = headers,
+            url         = url,
+            headers     = headers,
             requestBody = requestBody.toRequestBody(contentType = "application/x-www-form-urlencoded; charset=UTF-8".toMediaType()),
             interceptor = interceptor
         )
@@ -113,13 +112,12 @@ class InatBox : MainAPI() {
     private fun getJsonFromEncryptedInatResponse(response: String): String? {
         try {
             val algorithm = "AES/CBC/PKCS5Padding"
-            val keySpec = SecretKeySpec(randomAESKey.toByteArray(), "AES")
+            val keySpec   = SecretKeySpec(randomAESKey.toByteArray(), "AES")
 
             // First decryption iteration
             val cipher1 = Cipher.getInstance(algorithm)
             cipher1.init(Cipher.DECRYPT_MODE, keySpec, IvParameterSpec(randomAESKey.toByteArray()))
-            val firstIterationData =
-                cipher1.doFinal(Base64.getDecoder().decode(response.split(":")[0]))
+            val firstIterationData = cipher1.doFinal(Base64.getDecoder().decode(response.split(":")[0]))
 
             // Second decryption iteration
             val cipher2 = Cipher.getInstance(algorithm)
@@ -139,8 +137,7 @@ class InatBox : MainAPI() {
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
         // Fetch the data from the category URL
-        val jsonResponse =
-            makeInatRequest(request.data) ?: return newHomePageResponse(request.name, emptyList())
+        val jsonResponse = makeInatRequest(request.data) ?: return newHomePageResponse(request.name, emptyList())
 
         // Parse the JSON response into a list of SearchResponse objects
         val searchResults = parseJsonResponse(jsonResponse)
@@ -170,9 +167,10 @@ class InatBox : MainAPI() {
                 // Check if the response contains diziType (TV series or movie)
                 if (item.has("diziType")) {
                     // Extract fields from the JSON object
-                    val name = item.getString("diziName")
-                    val url = item.getString("diziUrl")
-                    val type = item.getString("diziType")
+                    val name      = item.getString("diziName")
+                    if (name.contains("inattv")) { continue }
+                    val url       = item.getString("diziUrl")
+                    val type      = item.getString("diziType")
                     val posterUrl = item.getString("diziImg")
 
                     // Create a SearchResponse based on the type
@@ -192,8 +190,9 @@ class InatBox : MainAPI() {
                     searchResponse?.let { searchResults.add(it) }
                 } else if (item.has("chName") && item.has("chUrl") && item.has("chImg")) {
                     // Handle the case where diziType is missing but chName, chUrl, and chImg are present
-                    val name = item.getString("chName")
-                    val url = item.getString("chUrl")
+                    val name      = item.getString("chName")
+                    if (name.contains("inattv")) { continue }
+                    val url       = item.getString("chUrl")
                     val posterUrl = item.getString("chImg")
 
                     // Create a MovieSearchResponse
@@ -215,7 +214,7 @@ class InatBox : MainAPI() {
     override suspend fun search(query: String): List<SearchResponse> {
         if (urlToSearchResponse.isEmpty()) {
             for (pageData in mainPage) {
-                val url = pageData.data
+                val url          = pageData.data
                 val jsonResponse = makeInatRequest(url) ?: continue
 
                 val searchResults = parseJsonResponse(jsonResponse)
@@ -274,7 +273,7 @@ class InatBox : MainAPI() {
     ): TvSeriesLoadResponse? {
         // Map to store episodes grouped by season and episode number
         val episodeEntries = mutableMapOf<Pair<Int, Int>, MutableList<Episode>>()
-        val episodes = mutableListOf<Episode>()
+        val episodes       = mutableListOf<Episode>()
 
         // Get the SearchResponse for the given URL
         val searchResponse = urlToSearchResponse[url]
@@ -286,12 +285,12 @@ class InatBox : MainAPI() {
 
                 // Extract season details
                 val seasonName = seasonItem.getString("diziName")
-                val seasonUrl = seasonItem.getString("diziUrl")
-                val posterUrl = seasonItem.getString("diziImg")
+                val seasonUrl  = seasonItem.getString("diziUrl")
+                val posterUrl  = seasonItem.getString("diziImg")
 
                 // Fetch the episode data for this season
                 val episodeResponse = makeInatRequest(seasonUrl) ?: continue
-                val episodeArray = try {
+                val episodeArray    = try {
                     JSONArray(episodeResponse)
                 } catch (e: Exception) {
                     Log.e("InatBox", "Failed to parse episode JSON for season: $seasonName", e)
@@ -306,13 +305,13 @@ class InatBox : MainAPI() {
 
                         // Extract episode details
                         val episodeName = episodeItem.getString("chName")
-                        val episodeUrl = episodeItem.getString("chUrl")
+                        val episodeUrl  = episodeItem.getString("chUrl")
 
                         // Extract season and episode numbers from the name (e.g., "S01 - 01.BÖLÜM")
                         val seasonEpisodeRegex = Regex("""S(\d+).*?(\d+).BÖLÜM""")
-                        val matchResult = seasonEpisodeRegex.find(episodeName)
-                        val season = matchResult?.groupValues?.get(1)?.toIntOrNull()
-                        val episode = matchResult?.groupValues?.get(2)?.toIntOrNull()
+                        val matchResult        = seasonEpisodeRegex.find(episodeName)
+                        val season             = matchResult?.groupValues?.get(1)?.toIntOrNull()
+                        val episode            = matchResult?.groupValues?.get(2)?.toIntOrNull()
 
                         if (season == null || episode == null) {
                             episodes.add(
@@ -324,9 +323,9 @@ class InatBox : MainAPI() {
                         } else {
                             // Create an Episode object
                             val episodeObj = Episode(
-                                data = episodeUrl,
-                                name = episodeName,
-                                season = season,
+                                data    = episodeUrl,
+                                name    = episodeName,
+                                season  = season,
                                 episode = episode
                             )
 
@@ -351,7 +350,7 @@ class InatBox : MainAPI() {
                 val sourcesJsonArray = JSONArray()
                 for (episodeObj in episodeList) {
                     val sourceName = episodeObj.name // Use the episode name as the source name
-                    val sourceUrl = episodeObj.data
+                    val sourceUrl  = episodeObj.data
 
                     // Create a JSON object for the source
                     val sourceJsonObject = JSONObject().apply {
@@ -366,8 +365,8 @@ class InatBox : MainAPI() {
                 // Create a new Episode object with the JSON array as the data
                 episodes.add(
                     Episode(
-                        data = sourcesJsonArray.toString(), // Convert JSON array to string
-                        season = season,
+                        data    = sourcesJsonArray.toString(), // Convert JSON array to string
+                        season  = season,
                         episode = episode
                     )
                 )
@@ -375,7 +374,7 @@ class InatBox : MainAPI() {
 
             // Get the name and poster URL from the first season
             val firstSeason = jsonArray.getJSONObject(0)
-            val posterUrl = firstSeason.getString("diziImg")
+            val posterUrl   = firstSeason.getString("diziImg")
 
             // Return a TvSeriesLoadResponse
             if (searchResponse != null) {
@@ -456,8 +455,8 @@ class InatBox : MainAPI() {
             val firstItem = jsonArray.getJSONObject(0)
 
             // Extract fields from the JSON object
-            val name = firstItem.getString("chName")
-            val dataUrl = firstItem.getString("chUrl")
+            val name      = firstItem.getString("chName")
+            val dataUrl   = firstItem.getString("chUrl")
             val posterUrl = firstItem.getString("chImg")
 
             // Return a MovieLoadResponse
