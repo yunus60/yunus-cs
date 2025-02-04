@@ -251,7 +251,7 @@ class InatBox : MainAPI() {
             return when (type) {
                 "dizi" -> parseTvSeriesResponse(item)
                 "film" -> parseMovieResponse(item)
-                else -> null
+                else   -> null
             }
 
         } else if (item.has("chName") && item.has("chUrl") && item.has("chImg")) {
@@ -466,14 +466,21 @@ class InatBox : MainAPI() {
     private suspend fun parseMovieResponse(item: JSONObject): MovieLoadResponse? {
         try {
             if (item.has("diziType")) {
-                val url       = item.getString("diziUrl")
+                val name      = item.getString("diziName")
+                var url       = item.getString("diziUrl")
                 val posterUrl = item.getString("diziImg")
                 val plot      = item.getString("diziDetay")
 
                 val jsonResponse = makeInatRequest(url) ?: return null
+                val jsonObject   = JSONArray(jsonResponse).getJSONObject(0)
+                url = jsonObject.getString("chUrl")
 
-                return newMovieLoadResponse(name,url,TvType.Movie,jsonResponse)
+                return newMovieLoadResponse(name, url, TvType.Movie, url) {
+                    this.posterUrl = posterUrl
+                    this.plot      = plot
+                }
             } else {
+                val name      = item.getString("chName")
                 var url       = item.getString("chUrl")
                 val posterUrl = item.getString("chImg")
 
