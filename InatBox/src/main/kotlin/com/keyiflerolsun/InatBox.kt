@@ -178,10 +178,10 @@ class InatBox : MainAPI() {
 
                     val searchResponse = when (chType) {
                         "live_url", "tekli_regex_lb_sh_3" -> LiveSearchResponse(
-                            name =  name,
-                            url = item.toString(),
-                            apiName = this.name,
-                            type = TvType.Live,
+                            name      =  name,
+                            url       = item.toString(),
+                            apiName   = this.name,
+                            type      = TvType.Live,
                             posterUrl = posterUrl
                         )
 
@@ -509,7 +509,13 @@ class InatBox : MainAPI() {
             val dataUrl      = firstItem.getString("chUrl")
 
             // Return a MovieLoadResponse
-            return LiveStreamLoadResponse(name = name, url = url, apiName = this.name,dataUrl = dataUrl, posterUrl = posterUrl)
+            return LiveStreamLoadResponse(
+                name      = name,
+                url       = url,
+                apiName   = this.name,
+                dataUrl   = dataUrl,
+                posterUrl = posterUrl
+            )
         } catch (e: Exception) {
             Log.e("InatBox", "Failed to parse movie response: ${e.message}")
             return null
