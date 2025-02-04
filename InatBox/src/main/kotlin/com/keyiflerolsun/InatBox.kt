@@ -270,6 +270,7 @@ class InatBox : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
+        Log.d("InatBox", "data: ${data}")
         return try {
             // Check if the data is a JSON array (for TV series episodes)
             if (data.startsWith("[")) {
@@ -284,7 +285,20 @@ class InatBox : MainAPI() {
                     val sourceName = sourceJsonObject.optString("sourceName", "")
                     var sourceUrl  = sourceJsonObject.optString("sourceUrl")
                     sourceUrl      = sourceUrl.vkSourceFix()
-                    loadExtractor(sourceUrl, subtitleCallback, callback)
+                    if (sourceUrl.contains(".m3u8")) {
+                        callback.invoke(
+                            ExtractorLink(
+                                source  = this.name,
+                                name    = this.name,
+                                url     = sourceUrl,
+                                referer = "https://google.com/",
+                                quality = Qualities.Unknown.value,
+                                type    = ExtractorLinkType.M3U8
+                            )
+                        )
+                    } else {
+                        loadExtractor(sourceUrl, subtitleCallback, callback)
+                    }
                 }
             } else {
                 var sourceUrl      = data
