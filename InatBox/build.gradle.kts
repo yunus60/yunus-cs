@@ -1,9 +1,9 @@
-version = 3
+version = 4
 
 cloudstream {
     authors     = listOf("JustRelaxable", "keyiflerolsun")
     language    = "tr"
-    description = "İnatBox cloudstream eklentisidir. Sevdiğiniz yayın platformlarınızı burada bulabilirsiniz."
+    description = "İnatBox cloudstream eklentisidir. Sevdiğiniz yayın platformlarını ve canlı maçları burada bulabilirsiniz."
 
     /**
      * Status int as the following:
