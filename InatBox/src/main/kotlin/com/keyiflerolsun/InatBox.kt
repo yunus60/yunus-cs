@@ -166,7 +166,7 @@ class InatBox : MainAPI() {
                             this.posterUrl = posterUrl
                         }
 
-                        else -> null // Ignore unsupported types
+                        else   -> null // Ignore unsupported types
                     }
                     searchResponse?.let { searchResults.add(it) }
                 } else if (item.has("chName") && item.has("chUrl") && item.has("chImg")) {
@@ -178,7 +178,7 @@ class InatBox : MainAPI() {
 
                     val searchResponse = when (chType) {
                         "live_url", "tekli_regex_lb_sh_3" -> LiveSearchResponse(
-                            name      =  name,
+                            name      = name,
                             url       = item.toString(),
                             apiName   = this.name,
                             type      = TvType.Live,
@@ -501,6 +501,7 @@ class InatBox : MainAPI() {
 
     private suspend fun parseLiveStreamLoadResponse(item: JSONObject): LiveStreamLoadResponse? {
         try {
+            val name      = item.getString("chName")
             var url       = item.getString("chUrl")
             val posterUrl = item.getString("chImg")
 
