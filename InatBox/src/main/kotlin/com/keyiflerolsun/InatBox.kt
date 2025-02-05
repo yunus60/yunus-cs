@@ -9,7 +9,7 @@ import java.net.URI
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 import javax.crypto.spec.IvParameterSpec
-import java.util.Base64
+import android.util.Base64
 
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -35,14 +35,14 @@ class InatBox : MainAPI() {
     // ! This urls come from ${categoryUrl}/ct.php | I assume they won't change in the near future
     override val mainPage = mainPageOf(
         "https://boxbc.sbs/CDN/001_STR/boxbc.sbs/spor_v2.php" to "Spor Kanalları",
-        "${contentUrl}/tv/cable.php" to "Kanallar Liste 1",
-        "${contentUrl}/tv/list2.php" to "Kanallar Liste 2",
-        "${contentUrl}/tv/sinema.php" to "Sinema Kanalları",
-        "${contentUrl}/tv/belgesel.php" to "Belgesel Kanalları",
-        "${contentUrl}/tv/ulusal.php" to "Ulusal Kanallar",
-        "${contentUrl}/tv/haber.php" to "Haber Kanalları",
-        "${contentUrl}/tv/cocuk.php" to "Çocuk Kanalları",
-        "${contentUrl}/tv/dini.php" to "Dini Kanallar",
+        "${contentUrl}/tv/cable.php"                          to "Kanallar Liste 1",
+        "${contentUrl}/tv/list2.php"                          to "Kanallar Liste 2",
+        "${contentUrl}/tv/sinema.php"                         to "Sinema Kanalları",
+        "${contentUrl}/tv/belgesel.php"                       to "Belgesel Kanalları",
+        "${contentUrl}/tv/ulusal.php"                         to "Ulusal Kanallar",
+        "${contentUrl}/tv/haber.php"                          to "Haber Kanalları",
+        "${contentUrl}/tv/cocuk.php"                          to "Çocuk Kanalları",
+        "${contentUrl}/tv/dini.php"                           to "Dini Kanallar",
         "${contentUrl}/ex/index.php"                          to "EXXEN",
         "${contentUrl}/ga/index.php"                          to "Gain",
         "${contentUrl}/blu/index.php"                         to "BluTV",
@@ -129,12 +129,12 @@ class InatBox : MainAPI() {
             // First decryption iteration
             val cipher1 = Cipher.getInstance(algorithm)
             cipher1.init(Cipher.DECRYPT_MODE, keySpec, IvParameterSpec(aesKey.toByteArray()))
-            val firstIterationData = cipher1.doFinal(Base64.getDecoder().decode(response.split(":")[0]))
+            val firstIterationData = cipher1.doFinal(Base64.decode(response.split(":")[0], Base64.DEFAULT))
 
             // Second decryption iteration
             val cipher2 = Cipher.getInstance(algorithm)
             cipher2.init(Cipher.DECRYPT_MODE, keySpec, IvParameterSpec(aesKey.toByteArray()))
-            val secondIterationData = cipher2.doFinal(Base64.getDecoder().decode(String(firstIterationData).split(":")[0]))
+            val secondIterationData = cipher2.doFinal(Base64.decode(String(firstIterationData).split(":")[0], Base64.DEFAULT))
 
             // Parse JSON
             val jsonString = String(secondIterationData)
@@ -270,7 +270,7 @@ class InatBox : MainAPI() {
             val loadResponse = when (chType) {
                 "live_url","cable_sh" -> parseLiveStreamLoadResponse(item)
                 "tekli_regex_lb_sh_3" -> parseLiveSportsStreamLoadResponse(item)
-                else                              -> parseMovieResponse(item)
+                else                  -> parseMovieResponse(item)
             }
             return loadResponse
         } else {
@@ -311,12 +311,12 @@ class InatBox : MainAPI() {
                 }
             } else {
                 val jsonObject = JSONObject(data)
-                var sourceUrl = jsonObject.getString("chUrl")
+                var sourceUrl  = jsonObject.getString("chUrl")
 
                 var headers: MutableMap<String,String> = mutableMapOf()
                 try {
                     val chHeaders = jsonObject.getString("chHeaders")
-                    val chReg = jsonObject.getString("chReg")
+                    val chReg     = jsonObject.getString("chReg")
                     if(chHeaders != "null"){
                         val jsonHeaders = JSONArray(chHeaders).getJSONObject(0)
                         for (entry in jsonHeaders.keys()){
@@ -325,14 +325,14 @@ class InatBox : MainAPI() {
                     }
                     if(chReg != null){
                         val jsonReg = JSONArray(chReg).getJSONObject(0)
-                        val cookie = jsonReg.getString("playSH2")
+                        val cookie  = jsonReg.getString("playSH2")
                         headers.put("Cookie",cookie)
                     }
                 }catch (e:Exception){
 
                 }
 
-                sourceUrl = sourceUrl.vkSourceFix()
+                sourceUrl          = sourceUrl.vkSourceFix()
                 val extractorFound = loadExtractor(sourceUrl, subtitleCallback, callback)
 
                 //When no extractor found, try to load it as stream
@@ -549,8 +549,8 @@ class InatBox : MainAPI() {
             val name      = item.getString("chName")
             var url       = item.getString("chUrl")
             val posterUrl = item.getString("chImg")
-            val headers = item.getString("chHeaders")
-            val reg = item.getString("chReg")
+            val headers   = item.getString("chHeaders")
+            val reg       = item.getString("chReg")
 
             val jsonResponse = makeInatRequest(url) ?: return null
             val firstItem    = JSONObject(jsonResponse)
