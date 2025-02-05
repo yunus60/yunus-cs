@@ -35,12 +35,14 @@ class InatBox : MainAPI() {
     // ! This urls come from ${categoryUrl}/ct.php | I assume they won't change in the near future
     override val mainPage = mainPageOf(
         "https://boxbc.sbs/CDN/001_STR/boxbc.sbs/spor_v2.php" to "Spor Kanalları",
-        "${contentUrl}/tv/ulusal.php"                         to "Ulusal",
-        "${contentUrl}/tv/haber.php"                          to "Haber",
-        "${contentUrl}/tv/belgesel.php"                       to "Belgesel",
-        "${contentUrl}/tv/ulusal.php"                         to "Ulusal",
-        "${contentUrl}/tv/cocuk.php"                          to "Çocuk",
-        "${contentUrl}/tv/sinema.php"                         to "Sinema",
+        "${contentUrl}/tv/cable.php" to "Kanallar Liste 1",
+        "${contentUrl}/tv/list2.php" to "Kanallar Liste 2",
+        "${contentUrl}/tv/sinema.php" to "Sinema Kanalları",
+        "${contentUrl}/tv/belgesel.php" to "Belgesel Kanalları",
+        "${contentUrl}/tv/ulusal.php" to "Ulusal Kanallar",
+        "${contentUrl}/tv/haber.php" to "Haber Kanalları",
+        "${contentUrl}/tv/cocuk.php" to "Çocuk Kanalları",
+        "${contentUrl}/tv/dini.php" to "Dini Kanallar",
         "${contentUrl}/ex/index.php"                          to "EXXEN",
         "${contentUrl}/ga/index.php"                          to "Gain",
         "${contentUrl}/blu/index.php"                         to "BluTV",
@@ -54,7 +56,7 @@ class InatBox : MainAPI() {
         "${contentUrl}/yabanci-dizi/index.php"                to "Yabancı Diziler",
         "${contentUrl}/yerli-dizi/index.php"                  to "Yerli Diziler",
         "${contentUrl}/film/yerli-filmler.php"                to "Yerli Filmler",
-        "${contentUrl}/film/4k-film-exo.php"                  to "4K Film İzle | Exo",
+        "${contentUrl}/film/4k-film-exo.php"                  to "4K Film İzle | Exo"
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
@@ -183,7 +185,7 @@ class InatBox : MainAPI() {
                     val chType    = item.getString("chType")
 
                     val searchResponse = when (chType) {
-                        "live_url", "tekli_regex_lb_sh_3", "cable_sh", -> LiveSearchResponse(
+                        "live_url", "tekli_regex_lb_sh_3" -> LiveSearchResponse(
                             name      = name,
                             url       = item.toString(),
                             apiName   = this.name,
@@ -266,8 +268,9 @@ class InatBox : MainAPI() {
             val chType = item.getString("chType")
 
             val loadResponse = when (chType) {
-                "live_url", "tekli_regex_lb_sh_3", "cable_sh" -> parseLiveStreamLoadResponse(item)
-                else                                          -> parseMovieResponse(item)
+                "live_url","cable_sh" -> parseLiveStreamLoadResponse(item)
+                "tekli_regex_lb_sh_3" -> parseLiveSportsStreamLoadResponse(item)
+                else                              -> parseMovieResponse(item)
             }
             return loadResponse
         } else {
@@ -307,8 +310,29 @@ class InatBox : MainAPI() {
                     }
                 }
             } else {
-                var sourceUrl      = data
-                sourceUrl          = sourceUrl.vkSourceFix()
+                val jsonObject = JSONObject(data)
+                var sourceUrl = jsonObject.getString("chUrl")
+
+                var headers: MutableMap<String,String> = mutableMapOf()
+                try {
+                    val chHeaders = jsonObject.getString("chHeaders")
+                    val chReg = jsonObject.getString("chReg")
+                    if(chHeaders != "null"){
+                        val jsonHeaders = JSONArray(chHeaders).getJSONObject(0)
+                        for (entry in jsonHeaders.keys()){
+                            headers.put(entry,jsonHeaders[entry].toString())
+                        }
+                    }
+                    if(chReg != null){
+                        val jsonReg = JSONArray(chReg).getJSONObject(0)
+                        val cookie = jsonReg.getString("playSH2")
+                        headers.put("Cookie",cookie)
+                    }
+                }catch (e:Exception){
+
+                }
+
+                sourceUrl = sourceUrl.vkSourceFix()
                 val extractorFound = loadExtractor(sourceUrl, subtitleCallback, callback)
 
                 //When no extractor found, try to load it as stream
@@ -318,9 +342,9 @@ class InatBox : MainAPI() {
                             source  = this.name,
                             name    = this.name,
                             url     = sourceUrl,
-                            referer = "http://kablowebtv.com/",
-                            headers = mapOf("cookie" to "ASP.NET_SessionId=klzdsxrl5rptypvzcaoghbim;emwId=51093b0c-e1a6-4684-81dc-16af380240e1;eSessionId=35012045"),
+                            referer = "",
                             quality = Qualities.Unknown.value,
+                            headers = headers,
                             type    = ExtractorLinkType.M3U8
                         )
                     )
@@ -496,7 +520,7 @@ class InatBox : MainAPI() {
                 val jsonObject   = JSONArray(jsonResponse).getJSONObject(0)
                 url = jsonObject.getString("chUrl")
 
-                return newMovieLoadResponse(name, url, TvType.Movie, url) {
+                return newMovieLoadResponse(name, url, TvType.Movie, jsonObject.toString()) {
                     this.posterUrl = posterUrl
                     this.plot      = plot
                 }
@@ -510,10 +534,40 @@ class InatBox : MainAPI() {
                 //val dataUrl = firstItem.getString("chUrl")
 
                 // Return a MovieLoadResponse
-                return newMovieLoadResponse(name, url, TvType.Movie, url) {
+                return newMovieLoadResponse(name, url, TvType.Movie, item.toString()) {
                     this.posterUrl = posterUrl
                 }
             }
+        } catch (e: Exception) {
+            Log.e("InatBox", "Failed to parse movie response: ${e.message}")
+            return null
+        }
+    }
+
+    private suspend fun parseLiveSportsStreamLoadResponse(item: JSONObject): LiveStreamLoadResponse? {
+        try {
+            val name      = item.getString("chName")
+            var url       = item.getString("chUrl")
+            val posterUrl = item.getString("chImg")
+            val headers = item.getString("chHeaders")
+            val reg = item.getString("chReg")
+
+            val jsonResponse = makeInatRequest(url) ?: return null
+            val firstItem    = JSONObject(jsonResponse)
+
+            firstItem.put("chHeaders",headers)
+            firstItem.put("chReg",reg)
+
+            val dataUrl      = firstItem.getString("chUrl")
+
+            // Return a MovieLoadResponse
+            return LiveStreamLoadResponse(
+                name      = name,
+                url       = url,
+                apiName   = this.name,
+                dataUrl   = firstItem.toString(),
+                posterUrl = posterUrl
+            )
         } catch (e: Exception) {
             Log.e("InatBox", "Failed to parse movie response: ${e.message}")
             return null
@@ -526,22 +580,12 @@ class InatBox : MainAPI() {
             var url       = item.getString("chUrl")
             val posterUrl = item.getString("chImg")
 
-            var dataUrl = ""
-
-            if (url.contains(".m3u")) {
-                dataUrl = url
-            } else {
-                val jsonResponse = makeInatRequest(url) ?: return null
-                val firstItem    = JSONObject(jsonResponse)
-                dataUrl          = firstItem.getString("chUrl")
-            }
-
             // Return a MovieLoadResponse
             return LiveStreamLoadResponse(
                 name      = name,
                 url       = url,
                 apiName   = this.name,
-                dataUrl   = dataUrl,
+                dataUrl   = item.toString(),
                 posterUrl = posterUrl
             )
         } catch (e: Exception) {
