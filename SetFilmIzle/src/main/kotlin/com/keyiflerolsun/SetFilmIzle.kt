@@ -8,6 +8,8 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addActors
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
+import org.json.JSONObject
+import org.jsoup.Jsoup
 
 class SetFilmIzle : MainAPI() {
     override var mainUrl              = "https://www.setfilmizle.nl"
@@ -54,7 +56,7 @@ class SetFilmIzle : MainAPI() {
     }
 
     private fun Element.toMainPageResult(): SearchResponse? {
-        val title     = this.selectFirst("h2.flbaslik")?.text() ?: return null
+        val title     = this.selectFirst("h2")?.text() ?: return null
         val href      = fixUrlNull(this.selectFirst("a")?.attr("href")) ?: return null
         val posterUrl = fixUrlNull(this.selectFirst("img")?.attr("data-src"))
 
@@ -66,15 +68,26 @@ class SetFilmIzle : MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-        val document = app.get("${mainUrl}/?s=${query}").document
+        val mainPage = app.get(mainUrl).document
+        val nonce    = Regex("""nonce: '(.*)'""").find(mainPage.html())?.groupValues?.get(1) ?: ""
+        val search   = app.post(
+            url     = "${mainUrl}/wp-admin/admin-ajax.php",
+            headers = mapOf("X-Requested-With" to "XMLHttpRequest"),
+            data    = mapOf(
+                "action" to "ajax_search",
+                "nonce"  to nonce,
+                "search" to query
+            )
+        )
+        val document = Jsoup.parse(JSONObject(search.text).getString("html"))
 
-        return document.select("div.result-item article").mapNotNull { it.toSearchResult() }
+        return document.select("div.items article").mapNotNull { it.toSearchResult() }
     }
 
     private fun Element.toSearchResult(): SearchResponse? {
-        val title     = this.selectFirst("div.title a")?.text() ?: return null
-        val href      = fixUrlNull(this.selectFirst("div.title a")?.attr("href")) ?: return null
-        val posterUrl = fixUrlNull(this.selectFirst("img")?.attr("src"))
+        val title     = this.selectFirst("h2")?.text() ?: return null
+        val href      = fixUrlNull(this.selectFirst("a")?.attr("href")) ?: return null
+        val posterUrl = fixUrlNull(this.selectFirst("img")?.attr("data-src"))
 
         if (href.contains("/dizi/")) {
             return newTvSeriesSearchResponse(title, href, TvType.TvSeries) { this.posterUrl = posterUrl }
@@ -104,11 +117,11 @@ class SetFilmIzle : MainAPI() {
             duration = document.selectFirst("div#info span:containsOwn(Dakika)")?.text()?.split(" ")?.first()?.trim()?.toIntOrNull()
 
             val episodes = document.select("div#episodes ul.episodios li").mapNotNull {
-                val epHref    = fixUrlNull(it.selectFirst("div.episodiotitle a")?.attr("href")) ?: return@mapNotNull null
-                val epName    = it.selectFirst("div.episodiotitle a")?.ownText()?.trim() ?: return@mapNotNull null
-                val epDetail  = it.selectFirst("div.numerando")?.text()?.split(" - ") ?: return@mapNotNull null
-                val epSeason  = epDetail.first()?.toIntOrNull()
-                val epEpisode = epDetail.last()?.toIntOrNull()
+                val epHref    = fixUrlNull(it.selectFirst("h4.episodiotitle a")?.attr("href")) ?: return@mapNotNull null
+                val epName    = it.selectFirst("h4.episodiotitle a")?.ownText()?.trim() ?: return@mapNotNull null
+                val epDetail  = it.selectFirst("h4.episodiotitle a")?.ownText()?.trim() ?: return@mapNotNull null
+                val epSeason  = epDetail.substringBefore(". Sezon")?.toIntOrNull()
+                val epEpisode = epDetail.split("Sezon ").last().substringBefore(". Bölüm")?.toIntOrNull()
 
                 Episode(
                     data    = epHref,
