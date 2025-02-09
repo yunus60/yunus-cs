@@ -10,7 +10,6 @@ import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 import javax.crypto.spec.IvParameterSpec
 import android.util.Base64
-
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONException
@@ -75,8 +74,6 @@ class InatBox : MainAPI() {
         return newHomePageResponse(request.name, searchResults)
     }
 
-
-    // Function to make an encrypted request
     private suspend fun makeInatRequest(url: String): String? {
         // Extract hostname using URI
         val hostName = try {
@@ -120,7 +117,6 @@ class InatBox : MainAPI() {
         }
     }
 
-    // Function to decrypt the encrypted response and parse JSON
     private fun getJsonFromEncryptedInatResponse(response: String): String? {
         try {
             val algorithm = "AES/CBC/PKCS5Padding"
@@ -145,7 +141,6 @@ class InatBox : MainAPI() {
         }
     }
 
-    // Helper function to parse the JSON response and return SearchResponse list
     private fun getSearchResponseList(jsonResponse: String): List<SearchResponse> {
         val searchResults = mutableListOf<SearchResponse>()
         try {
@@ -263,7 +258,6 @@ class InatBox : MainAPI() {
             }
 
         } else if (item.has("chName") && item.has("chUrl") && item.has("chImg")) {
-            // Handle the case where diziType is missing but chName, chUrl, and chImg are present
             val name   = item.getString("chName")
             val chType = item.getString("chType")
 
@@ -333,7 +327,7 @@ class InatBox : MainAPI() {
                 }
 
                 sourceUrl          = sourceUrl.vkSourceFix()
-                val extractorFound = loadExtractor(sourceUrl, subtitleCallback, callback)
+                val extractorFound = loadExtractor(sourceUrl, headers["Referer"], subtitleCallback, callback)
 
                 //When no extractor found, try to load it as stream
                 if (!extractorFound && sourceUrl.contains(".m3u8")) {
@@ -368,31 +362,25 @@ class InatBox : MainAPI() {
         }
     }
 
-    // Helper function to parse a TV series response
-    private suspend fun parseTvSeriesResponse(item: JSONObject,tvType: TvType = TvType.TvSeries): TvSeriesLoadResponse? {
-        // Map to store episodes grouped by season and episode number
-        val episodeEntries = mutableMapOf<Pair<Int, Int>, MutableList<Episode>>()
-        val episodes       = mutableListOf<Episode>()
+    private suspend fun parseTvSeriesResponse(item: JSONObject,tvType: TvType = TvType.TvSeries): LoadResponse? {
+        val episodes = mutableMapOf<DubStatus,MutableList<Episode>>()
+        val seasonDataList = mutableListOf<SeasonData>()
 
+        val name      = item.getString("diziName")
         val url       = item.getString("diziUrl")
-        val posterUrl = item.getString("diziImg")
         val plot      = item.getString("diziDetay")
 
         val jsonResponse = makeInatRequest(url) ?: return null
         val jsonArray    = JSONArray(jsonResponse)
 
-        // Get the SearchResponse for the given URL
-        val searchResponse = urlToSearchResponse[item.toString()]
-
         try {
-            // Iterate over each season in the JSON array
             for (i in 0 until jsonArray.length()) {
                 val seasonItem = jsonArray.getJSONObject(i)
-
-                // Extract season details
                 val seasonName = seasonItem.getString("diziName")
+                val seasonData = SeasonData(season = (i + 1), name = seasonName)
+                seasonDataList.add(seasonData)
+
                 val seasonUrl  = seasonItem.getString("diziUrl")
-                val posterUrl  = seasonItem.getString("diziImg")
 
                 // Fetch the episode data for this season
                 val episodeResponse = makeInatRequest(seasonUrl) ?: continue
@@ -403,98 +391,29 @@ class InatBox : MainAPI() {
                     continue
                 }
 
-                // Iterate over each episode in the season
                 for (j in 0 until episodeArray.length()) {
-                    Log.d("InatBox", "Episode array length: ${episodeArray.length()}")
                     try {
                         val episodeItem = episodeArray.getJSONObject(j)
-
-                        // Extract episode details
                         val episodeName = episodeItem.getString("chName")
-                        val episodeUrl  = episodeItem.getString("chUrl")
-
-                        // Extract season and episode numbers from the name (e.g., "S01 - 01.BÖLÜM")
-                        val seasonEpisodeRegex = Regex("""S(\d+).*?(\d+).BÖLÜM""")
-                        val matchResult        = seasonEpisodeRegex.find(episodeName)
-                        val season             = matchResult?.groupValues?.get(1)?.toIntOrNull()
-                        val episode            = matchResult?.groupValues?.get(2)?.toIntOrNull()
-
-                        if (season == null || episode == null) {
-                            episodes.add(
-                                Episode(
-                                    data = episodeUrl,
-                                    name = episodeName
-                                )
-                            )
-                        } else {
-                            // Create an Episode object
-                            val episodeObj = Episode(
-                                data    = episodeUrl,
-                                name    = episodeName,
-                                season  = season,
-                                episode = episode
-                            )
-
-                            // Group episodes by season and episode number
-                            val key = Pair(season, episode)
-                            if (!episodeEntries.containsKey(key)) {
-                                episodeEntries[key] = mutableListOf()
-                            }
-                            episodeEntries[key]?.add(episodeObj)
-                        }
+                        val episodePoster = episodeItem.getString("chImg")
+                        episodes.getOrPut(DubStatus.None,{ mutableListOf() }).add(
+                            Episode(data = episodeItem.toString(),name = episodeName, posterUrl = episodePoster, season = (i + 1), episode = (j + 1))
+                        )
                     } catch (e: JSONException) {
                         continue
                     }
                 }
             }
 
-            // Create a JSON array for episodes with the same season and episode number
-            for ((key, episodeList) in episodeEntries) {
-                val (season, episode) = key
-
-                // Create a JSON array for the sources
-                val sourcesJsonArray = JSONArray()
-                for (episodeObj in episodeList) {
-                    val sourceName = episodeObj.name // Use the episode name as the source name
-                    val sourceUrl  = episodeObj.data
-
-                    // Create a JSON object for the source
-                    val sourceJsonObject = JSONObject().apply {
-                        put("sourceName", sourceName)
-                        put("sourceUrl", sourceUrl)
-                    }
-
-                    // Add the source JSON object to the array
-                    sourcesJsonArray.put(sourceJsonObject)
-                }
-
-                // Create a new Episode object with the JSON array as the data
-                episodes.add(
-                    Episode(
-                        data    = sourcesJsonArray.toString(), // Convert JSON array to string
-                        season  = season,
-                        episode = episode
-                    )
-                )
-            }
-
-            // Get the name and poster URL from the first season
+            // Get the poster URL from the first season
             val firstSeason = jsonArray.getJSONObject(0)
             val posterUrl   = firstSeason.getString("diziImg")
 
-            // Return a TvSeriesLoadResponse
-            if (searchResponse != null) {
-                return newTvSeriesLoadResponse(
-                    searchResponse.name,
-                    url,
-                    tvType,
-                    episodes
-                ) {
-                    this.posterUrl = posterUrl
-                    this.plot      = plot
-                }
-            } else {
-                return null
+            return newAnimeLoadResponse(name = name, url = item.toString(), type = tvType,comingSoonIfNone = false){
+                this.episodes = episodes.mapValues { it.value.toList() }.toMutableMap()
+                this.posterUrl = posterUrl
+                this.plot = plot
+                this.seasonNames = seasonDataList
             }
         } catch (e: Exception) {
             Log.e(
@@ -507,22 +426,38 @@ class InatBox : MainAPI() {
         }
     }
 
-    // Helper function to parse a movie response
-    private suspend fun parseMovieResponse(item: JSONObject): MovieLoadResponse? {
+    private suspend fun parseMovieResponse(item: JSONObject): LoadResponse? {
         try {
             if (item.has("diziType")) {
+                val tracks = mutableMapOf<DubStatus,MutableList<Episode>>()
+
                 val name      = item.getString("diziName")
                 var url       = item.getString("diziUrl")
                 val posterUrl = item.getString("diziImg")
                 val plot      = item.getString("diziDetay")
 
                 val jsonResponse = makeInatRequest(url) ?: return null
+                val jsonArray = JSONArray(jsonResponse)
+
+
+                for (i in 0 until jsonArray.length()){
+                    val item = jsonArray.getJSONObject(i)
+                    val name      = item.getString("chName")
+                    val posterUrl = item.getString("chImg")
+                    val dubStatus = if(name.contains("altyazı",ignoreCase = true)) DubStatus.Subbed else if(name.contains("dublaj",ignoreCase = true)) DubStatus.Dubbed else DubStatus.None
+
+                    tracks.getOrPut(dubStatus,{ mutableListOf() }).add(
+                        Episode(data = item.toString(),name = name, posterUrl = posterUrl)
+                    )
+                }
+
                 val jsonObject   = JSONArray(jsonResponse).getJSONObject(0)
                 url = jsonObject.getString("chUrl")
 
-                return newMovieLoadResponse(name, url, TvType.Movie, jsonObject.toString()) {
+                return newAnimeLoadResponse(name = name, url = item.toString(), type = TvType.Movie ,comingSoonIfNone = false){
+                    this.episodes = tracks.mapValues { it.value.toList() }.toMutableMap()
                     this.posterUrl = posterUrl
-                    this.plot      = plot
+                    this.plot = plot
                 }
             } else {
                 val name      = item.getString("chName")
@@ -534,7 +469,7 @@ class InatBox : MainAPI() {
                 //val dataUrl = firstItem.getString("chUrl")
 
                 // Return a MovieLoadResponse
-                return newMovieLoadResponse(name, url, TvType.Movie, item.toString()) {
+                return newMovieLoadResponse(name, item.toString(), TvType.Movie, item.toString()) {
                     this.posterUrl = posterUrl
                 }
             }
@@ -554,22 +489,18 @@ class InatBox : MainAPI() {
 
             val jsonResponse = makeInatRequest(url) ?: return null
             val firstItem    = JSONObject(jsonResponse)
-
             firstItem.put("chHeaders",headers)
             firstItem.put("chReg",reg)
 
-            val dataUrl      = firstItem.getString("chUrl")
-
-            // Return a MovieLoadResponse
             return LiveStreamLoadResponse(
                 name      = name,
-                url       = url,
+                url       = item.toString(),
                 apiName   = this.name,
                 dataUrl   = firstItem.toString(),
                 posterUrl = posterUrl
             )
         } catch (e: Exception) {
-            Log.e("InatBox", "Failed to parse movie response: ${e.message}")
+            Log.e("InatBox", "Failed to parse sports live stream response: ${e.message}")
             return null
         }
     }
@@ -583,7 +514,7 @@ class InatBox : MainAPI() {
             // Return a MovieLoadResponse
             return LiveStreamLoadResponse(
                 name      = name,
-                url       = url,
+                url       = item.toString(),
                 apiName   = this.name,
                 dataUrl   = item.toString(),
                 posterUrl = posterUrl
