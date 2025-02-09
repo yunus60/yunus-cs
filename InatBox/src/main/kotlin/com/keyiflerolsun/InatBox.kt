@@ -409,7 +409,7 @@ class InatBox : MainAPI() {
             val firstSeason = jsonArray.getJSONObject(0)
             val posterUrl   = firstSeason.getString("diziImg")
 
-            return newAnimeLoadResponse(name = name, url = url, type = tvType,comingSoonIfNone = false){
+            return newAnimeLoadResponse(name = name, url = item.toString(), type = tvType,comingSoonIfNone = false){
                 this.episodes = episodes.mapValues { it.value.toList() }.toMutableMap()
                 this.posterUrl = posterUrl
                 this.plot = plot
@@ -454,7 +454,7 @@ class InatBox : MainAPI() {
                 val jsonObject   = JSONArray(jsonResponse).getJSONObject(0)
                 url = jsonObject.getString("chUrl")
 
-                return newAnimeLoadResponse(name = name, url = url, type = TvType.Movie ,comingSoonIfNone = false){
+                return newAnimeLoadResponse(name = name, url = item.toString(), type = TvType.Movie ,comingSoonIfNone = false){
                     this.episodes = tracks.mapValues { it.value.toList() }.toMutableMap()
                     this.posterUrl = posterUrl
                     this.plot = plot
@@ -469,7 +469,7 @@ class InatBox : MainAPI() {
                 //val dataUrl = firstItem.getString("chUrl")
 
                 // Return a MovieLoadResponse
-                return newMovieLoadResponse(name, url, TvType.Movie, item.toString()) {
+                return newMovieLoadResponse(name, item.toString(), TvType.Movie, item.toString()) {
                     this.posterUrl = posterUrl
                 }
             }
@@ -494,7 +494,7 @@ class InatBox : MainAPI() {
 
             return LiveStreamLoadResponse(
                 name      = name,
-                url       = url,
+                url       = item.toString(),
                 apiName   = this.name,
                 dataUrl   = firstItem.toString(),
                 posterUrl = posterUrl
@@ -514,7 +514,7 @@ class InatBox : MainAPI() {
             // Return a MovieLoadResponse
             return LiveStreamLoadResponse(
                 name      = name,
-                url       = url,
+                url       = item.toString(),
                 apiName   = this.name,
                 dataUrl   = item.toString(),
                 posterUrl = posterUrl
