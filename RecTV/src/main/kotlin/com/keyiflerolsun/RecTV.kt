@@ -11,7 +11,7 @@ import okhttp3.Interceptor
 import okhttp3.Response
 
 class RecTV : MainAPI() {
-    override var mainUrl              = "https://b.prectv29.sbs"
+    override var mainUrl              = "https://a.prectv28.sbs"
     override var name                 = "RecTV"
     override val hasMainPage          = true
     override var lang                 = "tr"
