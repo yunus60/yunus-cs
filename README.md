@@ -58,6 +58,11 @@ _CloudStream için Türkçe yayın yapan sitelere ait eklentiler_
 
 **[☕️ Kahve Ismarla](https://KekikAkademi.org/Kahve)**
 
+## 💻 Katkı Sağlayanlar
+<a href="https://github.com/keyiflerolsun/Kekik-cloudstream/graphs/contributors?selectedMetric=additions" target="_blank">
+  <img src="https://contrib.rocks/image?repo=keyiflerolsun/Kekik-cloudstream" />
+</a>
+
 ***
 
 > **[@KekikAkademi](https://t.me/KekikAkademi)** *için yazılmıştır..*
