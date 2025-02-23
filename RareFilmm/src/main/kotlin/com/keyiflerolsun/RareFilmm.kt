@@ -81,10 +81,10 @@ class RareFilmm : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("RRF", "data » ${data}")
+        Log.d("RRF", "data » $data")
         val document = app.get(data).document
-        var iframe   = fixUrlNull(document.selectFirst("article iframe")?.attr("src")) ?: return false
-        Log.d("RRF", "iframe » ${iframe}")
+        val iframe   = fixUrlNull(document.selectFirst("article iframe")?.attr("src")) ?: return false
+        Log.d("RRF", "iframe » $iframe")
 
         loadExtractor(iframe, "${mainUrl}/", subtitleCallback, callback)
 

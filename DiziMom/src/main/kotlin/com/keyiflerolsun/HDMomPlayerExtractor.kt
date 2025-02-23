@@ -20,18 +20,18 @@ open class HDMomPlayer : ExtractorApi() {
         val extRef  = referer ?: ""
         val iSource = app.get(url, referer=extRef).text
 
-        val bePlayer = Regex("""bePlayer\('([^']+)',\s*'(\{[^\}]+\})'\);""").find(iSource)?.groupValues
+        val bePlayer = Regex("""bePlayer\('([^']+)',\s*'(\{[^}]+\})'\);""").find(iSource)?.groupValues
         if (bePlayer != null) {
-            val bePlayerPass = bePlayer.get(1)
-            val bePlayerData = bePlayer.get(2)
+            val bePlayerPass = bePlayer[1]
+            val bePlayerData = bePlayer[2]
             val encrypted    = AesHelper.cryptoAESHandler(bePlayerData, bePlayerPass.toByteArray(), false)?.replace("\\", "") ?: throw ErrorLoadingException("failed to decrypt")
-            Log.d("Kekik_${this.name}", "encrypted » ${encrypted}")
+            Log.d("Kekik_${this.name}", "encrypted » $encrypted")
 
-            m3uLink = Regex("""video_location\":\"([^\"]+)""").find(encrypted)?.groupValues?.get(1)
+            m3uLink = Regex("""video_location":"([^"]+)""").find(encrypted)?.groupValues?.get(1)
         } else {
-            m3uLink = Regex("""file:\"([^\"]+)""").find(iSource)?.groupValues?.get(1)
+            m3uLink = Regex("""file:"([^"]+)""").find(iSource)?.groupValues?.get(1)
 
-            val trackStr = Regex("""tracks:\[([^\]]+)""").find(iSource)?.groupValues?.get(1)
+            val trackStr = Regex("""tracks:\[([^]]+)""").find(iSource)?.groupValues?.get(1)
             if (trackStr != null) {
                 val tracks:List<Track> = jacksonObjectMapper().readValue("[${trackStr}]")
 

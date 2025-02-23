@@ -17,7 +17,6 @@ import org.json.JSONObject
 
 class InatBox : MainAPI() {
     private val contentUrl  = "https://dizibox.rest"
-    private val categoryUrl = "https://dizilab.cfd"
 
     override var name                 = "InatBox"
     override val hasMainPage          = true
@@ -31,7 +30,6 @@ class InatBox : MainAPI() {
     private val urlToSearchResponse = mutableMapOf<String, SearchResponse>()
     private val aesKey = "ywevqtjrurkwtqgz" //Master secret and iv key
 
-    // ! This urls come from ${categoryUrl}/ct.php | I assume they won't change in the near future
     override val mainPage = mainPageOf(
         "https://boxbc.sbs/CDN/001_STR/boxbc.sbs/spor_v2.php" to "Spor Kanalları",
         "${contentUrl}/tv/cable.php"                          to "Kanallar Liste 1",
@@ -121,7 +119,7 @@ class InatBox : MainAPI() {
         }
 
         if (item.has("diziType")) {
-            val name = item.getString("diziName")
+            item.getString("diziName")
             val type = item.getString("diziType")
 
             return when (type) {
@@ -131,7 +129,7 @@ class InatBox : MainAPI() {
             }
 
         } else if (item.has("chName") && item.has("chUrl") && item.has("chImg")) {
-            val name = item.getString("chName")
+            item.getString("chName")
             val chType = item.getString("chType")
 
             val loadResponse = when (chType) {
@@ -146,19 +144,19 @@ class InatBox : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("InatBox", "data: ${data}")
+        Log.d("InatBox", "data: $data")
         return try {
             if (data.startsWith("[")) {
                 val chContentJsonArray = JSONArray(data)
                 for (i in 0 until chContentJsonArray.length()) {
                     val chContentJsonObject = chContentJsonArray.getJSONObject(i)
                     val chContent = parseToChContent(chContentJsonObject)
-                    loadChContentLinks(chContent, isCasting, subtitleCallback, callback)
+                    loadChContentLinks(chContent, subtitleCallback, callback)
                 }
             } else {
                 val chContentJsonArray = JSONObject(data)
                 val chContent = parseToChContent(chContentJsonArray)
-                loadChContentLinks(chContent, isCasting, subtitleCallback, callback)
+                loadChContentLinks(chContent, subtitleCallback, callback)
             }
             true
         } catch (e: Exception) {
@@ -201,14 +199,13 @@ class InatBox : MainAPI() {
                         val episodeItem = episodeArray.getJSONObject(j)
                         val episodeName = episodeItem.getString("chName")
                         val episodePoster = episodeItem.getString("chImg")
-                        episodes.getOrPut(DubStatus.None, { mutableListOf() }).add(
-                            Episode(
-                                data = episodeItem.toString(),
-                                name = episodeName,
-                                posterUrl = episodePoster,
-                                season = (i + 1),
-                                episode = (j + 1)
-                            )
+                        episodes.getOrPut(DubStatus.None) { mutableListOf() }.add(
+                            newEpisode(episodeItem.toString()) {
+                                this.name = episodeName
+                                this.posterUrl = episodePoster
+                                this.season = i + 1
+                                this.episode = j + 1
+                            }
                         )
                     } catch (e: JSONException) {
                         continue
@@ -246,7 +243,7 @@ class InatBox : MainAPI() {
         try {
             if (item.has("diziType")) {
                 val name = item.getString("diziName")
-                var url = item.getString("diziUrl")
+                val url = item.getString("diziUrl")
                 val posterUrl = item.getString("diziImg")
                 val plot = item.getString("diziDetay")
 
@@ -259,7 +256,7 @@ class InatBox : MainAPI() {
                 }
             } else {
                 val name = item.getString("chName")
-                var url = item.getString("chUrl")
+                item.getString("chUrl")
                 val posterUrl = item.getString("chImg")
                 return newMovieLoadResponse(name, item.toString(), TvType.Movie, item.toString()) {
                     this.posterUrl = posterUrl
@@ -276,13 +273,9 @@ class InatBox : MainAPI() {
             val chContent = parseToChContent(item)
             val posterUrl = chContent.chImg
 
-            return LiveStreamLoadResponse(
-                name = name,
-                url = item.toString(),
-                apiName = this.name,
-                dataUrl = item.toString(),
-                posterUrl = posterUrl
-            )
+            return newLiveStreamLoadResponse(name, item.toString(), item.toString()) {
+                this.posterUrl = posterUrl
+            }
         } catch (e: Exception) {
             Log.e("InatBox", "Failed to parse sports live stream response: ${e.message}")
             return null
@@ -295,14 +288,9 @@ class InatBox : MainAPI() {
             val name = chContent.chName
             val posterUrl = chContent.chImg
 
-            // Return a MovieLoadResponse
-            return LiveStreamLoadResponse(
-                name = name,
-                url = item.toString(),
-                apiName = this.name,
-                dataUrl = item.toString(),
-                posterUrl = posterUrl
-            )
+            return newLiveStreamLoadResponse(name, item.toString(), item.toString()) {
+                this.posterUrl = posterUrl
+            }
         } catch (e: Exception) {
             Log.e("InatBox", "Failed to parse movie response: ${e.message}")
             return null
@@ -310,13 +298,10 @@ class InatBox : MainAPI() {
     }
 
     private fun inatContentAllowed(item: JSONObject): Boolean {
-        var type = ""
-
-        if (item.has("diziType")) {
-            type = item.getString("diziType")
-
+        val type: String = if (item.has("diziType")) {
+            item.getString("diziType")
         } else {
-            type = item.getString("chType")
+            item.getString("chType")
         }
 
         return when (type) {
@@ -343,13 +328,13 @@ class InatBox : MainAPI() {
         )
     }
 
-    private suspend fun loadChContentLinks(chContent: ChContent, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit){
+    private suspend fun loadChContentLinks(chContent: ChContent, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit){
         val chType = chContent.chType
-        var contentToProcess : ChContent
+        val contentToProcess : ChContent
 
         if(chType == "tekli_regex_lb_sh_3"){
             val name = chContent.chName
-            var url = chContent.chUrl
+            val url = chContent.chUrl
             val posterUrl = chContent.chImg
             val headers = chContent.chHeaders
             val reg = chContent.chReg
@@ -367,24 +352,24 @@ class InatBox : MainAPI() {
             contentToProcess = chContent
         }
 
-        var sourceUrl = contentToProcess.chUrl
+        val sourceUrl = contentToProcess.chUrl
 
-        var headers: MutableMap<String, String> = mutableMapOf()
+        val headers: MutableMap<String, String> = mutableMapOf()
         try {
             val chHeaders = contentToProcess.chHeaders
             val chReg = contentToProcess.chReg
             if (chHeaders != "null") {
                 val jsonHeaders = JSONArray(chHeaders).getJSONObject(0)
                 for (entry in jsonHeaders.keys()) {
-                    headers.put(entry, jsonHeaders[entry].toString())
+                    headers[entry] = jsonHeaders[entry].toString()
                 }
             }
             if (chReg != "null") {
                 val jsonReg = JSONArray(chReg).getJSONObject(0)
                 val cookie = jsonReg.getString("playSH2")
-                headers.put("Cookie", cookie)
+                headers["Cookie"] = cookie
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
 
         }
 
@@ -499,7 +484,6 @@ class InatBox : MainAPI() {
                 //Let's pass item directly to the next step
                 if (item.has("diziType")) {
                     val name = item.getString("diziName")
-                    val url = item.getString("diziUrl")
                     val type = item.getString("diziType")
                     val posterUrl = item.getString("diziImg")
 
@@ -518,18 +502,13 @@ class InatBox : MainAPI() {
                 } else if (item.has("chName") && item.has("chUrl") && item.has("chImg")) {
                     // Handle the case where diziType is missing but chName, chUrl, and chImg are present
                     val name = item.getString("chName")
-                    var url = item.getString("chUrl")
                     val posterUrl = item.getString("chImg")
                     val chType = item.getString("chType")
 
                     val searchResponse = when (chType) {
-                        "live_url", "tekli_regex_lb_sh_3" -> LiveSearchResponse(
-                            name = name,
-                            url = item.toString(),
-                            apiName = this.name,
-                            type = TvType.Live,
-                            posterUrl = posterUrl
-                        )
+                        "live_url", "tekli_regex_lb_sh_3" -> newLiveSearchResponse(name, item.toString(), TvType.Live) {
+                            this.posterUrl = posterUrl
+                        }
 
                         else -> newMovieSearchResponse(name, item.toString()) {
                             this.posterUrl = posterUrl

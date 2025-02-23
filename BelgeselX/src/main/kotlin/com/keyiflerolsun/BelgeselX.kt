@@ -66,26 +66,27 @@ class BelgeselX : MainAPI() {
         val cx = "016376594590146270301:iwmy65ijgrm" // ! Might change in the future
 
         val tokenResponse = app.get("https://cse.google.com/cse.js?cx=${cx}")
-        val cseLibVersion = Regex("""cselibVersion\": \"(.*)\"""").find(tokenResponse.text)?.groupValues?.get(1)
-        val cseToken      = Regex("""cse_token\": \"(.*)\"""").find(tokenResponse.text)?.groupValues?.get(1)
+        val cseLibVersion = Regex("""cselibVersion": "(.*)"""").find(tokenResponse.text)?.groupValues?.get(1)
+        val cseToken      = Regex("""cse_token": "(.*)"""").find(tokenResponse.text)?.groupValues?.get(1)
 
         val response = app.get("https://cse.google.com/cse/element/v1?rsz=filtered_cse&num=100&hl=tr&source=gcsc&cselibv=${cseLibVersion}&cx=${cx}&q=${query}&safe=off&cse_tok=${cseToken}&oq=${query}&callback=google.search.cse.api9969&rurl=https%3A%2F%2Fbelgeselx.com%2F")
         Log.d("BLX","Search result: ${response.text}")
 
-        val titles     = Regex("""\"titleNoFormatting\": \"(.*)\"""").findAll(response.text).map { it.groupValues[1] }.toList()
-        val urls       = Regex("""\"url\": \"(.*)\"""").findAll(response.text).map { it.groupValues[1] }.toList()
-        val posterUrls = Regex("""\"ogImage\": \"(.*)\"""").findAll(response.text).map { it.groupValues[1] }.toList()
+        val titles     = Regex(""""titleNoFormatting": "(.*)"""").findAll(response.text).map { it.groupValues[1] }.toList()
+        val urls       = Regex(""""url": "(.*)"""").findAll(response.text).map { it.groupValues[1] }.toList()
+        val posterUrls = Regex(""""ogImage": "(.*)"""").findAll(response.text).map { it.groupValues[1] }.toList()
 
         val searchResponses = mutableListOf<TvSeriesSearchResponse>()
 
         for (i in titles.indices) {
-            val title     = titles[i].split("İzle")[0].trim()?.toTitleCase() ?: continue
+            val title     = titles[i].split("İzle")[0].trim().toTitleCase()
             val url       = urls.getOrNull(i) ?: continue
             val posterUrl = posterUrls.getOrNull(i) ?: continue
 
             if(!url.contains("belgeseldizi")) continue
-
-            searchResponses.add(TvSeriesSearchResponse(title, url,this.name, posterUrl = posterUrl))
+            searchResponses.add(newTvSeriesSearchResponse(title,url,TvType.Documentary) {
+                this.posterUrl = posterUrl
+            })
         }
 
         return searchResponses
@@ -108,18 +109,17 @@ class BelgeselX : MainAPI() {
 
             val seasonName = it.selectFirst("div.gen-single-meta-holder ul li")?.text()?.trim() ?: ""
             var epEpisode  = Regex("""Bölüm (\d+)""").find(seasonName)?.groupValues?.get(1)?.toIntOrNull() ?: 0
-            var epSeason   = Regex("""Sezon (\d+)""").find(seasonName)?.groupValues?.get(1)?.toIntOrNull() ?: 1
+            val epSeason   = Regex("""Sezon (\d+)""").find(seasonName)?.groupValues?.get(1)?.toIntOrNull() ?: 1
 
             if (epEpisode == 0) {
                 epEpisode = counter++
             }
 
-            Episode(
-                data    = epHref,
-                name    = epName,
-                season  = epSeason,
-                episode = epEpisode
-            )
+            newEpisode(epHref) {
+                this.name    = epName
+                this.season  = epSeason
+                this.episode = epEpisode
+            }
         }
 
         return newTvSeriesLoadResponse(title, url, TvType.Documentary, episodes) {
@@ -130,25 +130,25 @@ class BelgeselX : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("BLX", "data » ${data}")
+        Log.d("BLX", "data » $data")
         val source = app.get(data)
 
-        Regex("""<iframe\s+[^>]*src=\\\"([^\\\"']+)\\\"""").findAll(source.text).forEach {
-            val alternatifUrl  = it.groupValues[1]
-            Log.d("BLX", "alternatifUrl » ${alternatifUrl}")
+        Regex("""<iframe\s+[^>]*src=\\"([^\\"']+)\\"""").findAll(source.text).forEach { alternatifUrlMatchResult ->
+            val alternatifUrl  = alternatifUrlMatchResult.groupValues[1]
+            Log.d("BLX", "alternatifUrl » $alternatifUrl")
             val alternatifResp = app.get(alternatifUrl, referer=data)
 
             if (alternatifUrl.contains("new4.php")) {
-                Regex("""file:\"([^\"]+)\", label: \"([^\"]+)""").findAll(alternatifResp.text).forEach {
+                Regex("""file:"([^"]+)", label: "([^"]+)""").findAll(alternatifResp.text).forEach {
                     var thisName  = this.name
-                    var videoUrl  = it.groupValues[1]
+                    val videoUrl  = it.groupValues[1]
                     var quality   = it.groupValues[2]
                     if (quality == "FULL") {
                         quality   = "1080p"
                         thisName  = "Google"
                     }
-                    Log.d("BLX", "quality » ${quality}")
-                    Log.d("BLX", "videoUrl » ${videoUrl}")
+                    Log.d("BLX", "quality » $quality")
+                    Log.d("BLX", "videoUrl » $videoUrl")
 
                     callback.invoke(
                         ExtractorLink(
@@ -163,7 +163,7 @@ class BelgeselX : MainAPI() {
                 }
             } else {
                 val iframe = fixUrlNull(alternatifResp.document.selectFirst("iframe")?.attr("src")) ?: return@forEach
-                Log.d("BLX", "iframe » ${iframe}")
+                Log.d("BLX", "iframe » $iframe")
 
                 loadExtractor(iframe, "${mainUrl}/", subtitleCallback, callback)
             }

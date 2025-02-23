@@ -78,13 +78,13 @@ class FilmModu : MainAPI() {
 
         val orgTitle    = document.selectFirst("div.titles h1")?.text()?.trim() ?: return null
         val altTitle    = document.selectFirst("div.titles h2")?.text()?.trim() ?: ""
-        val title       = if (altTitle.isNotEmpty()) "${orgTitle} - ${altTitle}" else orgTitle
+        val title       = if (altTitle.isNotEmpty()) "$orgTitle - $altTitle" else orgTitle
         val poster      = fixUrlNull(document.selectFirst("img.img-responsive")?.attr("src"))
         val description = document.selectFirst("p[itemprop='description']")?.text()?.trim()
         val year        = document.selectFirst("span[itemprop='dateCreated']")?.text()?.trim()?.toIntOrNull()
         val tags        = document.select("div.description a[href*='-kategori/']").map { it.text() }
         val rating      = document.selectFirst("div.description p")?.ownText()?.split(" ")?.last()?.trim()?.toRatingInt()
-        val actors      = document.select("div.description a[href*='-oyuncu-']").map { Actor(it!!.selectFirst("span")!!.text()) }
+        val actors      = document.select("div.description a[href*='-oyuncu-']").map { Actor(it.selectFirst("span")!!.text()) }
         val trailer     = document.selectFirst("div.container iframe")?.attr("src")
 
         return newMovieLoadResponse(title, url, TvType.Movie, url) {
@@ -99,7 +99,7 @@ class FilmModu : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("FLMMD", "data » ${data}")
+        Log.d("FLMMD", "data » $data")
         val document = app.get(data).document
 
         document.select("div.alternates a").forEach {
@@ -111,7 +111,7 @@ class FilmModu : MainAPI() {
             val vidId   = Regex("""var videoId = '(.*)'""").find(altReq.text)?.groupValues?.get(1) ?: return@forEach
             val vidType = Regex("""var videoType = '(.*)'""").find(altReq.text)?.groupValues?.get(1) ?: return@forEach
 
-            val vidReq = app.get("${mainUrl}/get-source?movie_id=${vidId}&type=${vidType}")?.parsedSafe<GetSource>() ?: return@forEach
+            val vidReq = app.get("${mainUrl}/get-source?movie_id=${vidId}&type=${vidType}").parsedSafe<GetSource>() ?: return@forEach
 
             if (vidReq.subtitle != null) {
                 subtitleCallback.invoke(
@@ -125,8 +125,8 @@ class FilmModu : MainAPI() {
             vidReq.sources?.forEach { source ->
                 callback.invoke(
                     ExtractorLink(
-                        source  = "${this.name} - ${altName}",
-                        name    = "${this.name} - ${altName}",
+                        source  = "${this.name} - $altName",
+                        name    = "${this.name} - $altName",
                         url     = fixUrl(source.src),
                         referer = "${mainUrl}/",
                         quality = getQualityFromName(source.label),

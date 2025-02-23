@@ -59,7 +59,7 @@ class SezonlukDizi : MainAPI() {
         val poster      = fixUrlNull(document.selectFirst("div.image img")?.attr("data-src")) ?: return null
         val year        = document.selectFirst("div.extra span")?.text()?.trim()?.split("-")?.first()?.toIntOrNull()
         val description = document.selectFirst("span#tartismayorum-konu")?.text()?.trim()
-        val tags        = document.select("div.labels a[href*='tur']").mapNotNull { it?.text()?.trim() }
+        val tags        = document.select("div.labels a[href*='tur']").mapNotNull { it.text().trim() }
         val rating      = document.selectFirst("div.dizipuani a div")?.text()?.trim()?.replace(",", ".").toRatingInt()
         val duration    = document.selectXpath("//span[contains(text(), 'Dk.')]").text().trim().substringBefore(" Dk.").toIntOrNull()
 
@@ -83,12 +83,11 @@ class SezonlukDizi : MainAPI() {
                 val epEpisode = bolum.selectFirst("td:nth-of-type(3)")?.text()?.substringBefore(".Bölüm")?.trim()?.toIntOrNull()
                 val epSeason  = bolum.selectFirst("td:nth-of-type(2)")?.text()?.substringBefore(".Sezon")?.trim()?.toIntOrNull()
 
-                episodes.add(Episode(
-                    data    = epHref,
-                    name    = epName,
-                    season  = epSeason,
-                    episode = epEpisode
-                ))
+                episodes.add(newEpisode(epHref) {
+                    this.name    = epName
+                    this.season  = epSeason
+                    this.episode = epEpisode
+                })
             }
         }
 
@@ -105,11 +104,11 @@ class SezonlukDizi : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("SZD", "data » ${data}")
+        Log.d("SZD", "data » $data")
         val document = app.get(data).document
         val aspData = getAspData()
         val bid      = document.selectFirst("div#dilsec")?.attr("data-id") ?: return false
-        Log.d("SZD", "bid » ${bid}")
+        Log.d("SZD", "bid » $bid")
 
         val altyaziResponse = app.post(
             "${mainUrl}/ajax/dataAlternatif${aspData.alternatif}.asp",
@@ -128,8 +127,8 @@ class SezonlukDizi : MainAPI() {
                 data    = mapOf("id" to "${veri.id}")
             ).document
 
-            var iframe = fixUrlNull(veriResponse.selectFirst("iframe")?.attr("src")) ?: return@forEach
-            Log.d("SZD", "dil»1 | iframe » ${iframe}")
+            val iframe = fixUrlNull(veriResponse.selectFirst("iframe")?.attr("src")) ?: return@forEach
+            Log.d("SZD", "dil»1 | iframe » $iframe")
 
             loadExtractor(iframe, "${mainUrl}/", subtitleCallback) { link ->
                 callback.invoke(
@@ -164,8 +163,8 @@ class SezonlukDizi : MainAPI() {
                 data    = mapOf("id" to "${veri.id}")
             ).document
 
-            var iframe = fixUrlNull(veriResponse.selectFirst("iframe")?.attr("src")) ?: return@forEach
-            Log.d("SZD", "dil»0 | iframe » ${iframe}")
+            val iframe = fixUrlNull(veriResponse.selectFirst("iframe")?.attr("src")) ?: return@forEach
+            Log.d("SZD", "dil»0 | iframe » $iframe")
 
             loadExtractor(iframe, "${mainUrl}/", subtitleCallback) { link ->
                 callback.invoke(

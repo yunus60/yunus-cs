@@ -1,6 +1,6 @@
 // ! https://github.com/hexated/cloudstream-extensions-hexated/blob/master/Hdfilmcehennemi/src/main/kotlin/com/hexated/Hdfilmcehennemi.kt
 
-package com.hexated
+package com.keyiflerolsun
 
 import android.util.Log
 import org.jsoup.nodes.Element
@@ -22,7 +22,7 @@ class HDFilmCehennemi : MainAPI() {
     override val supportedTypes       = setOf(TvType.Movie, TvType.TvSeries)
 
     override val mainPage = mainPageOf(
-        "${mainUrl}"                                      to "Yeni Eklenen Filmler",
+        mainUrl to "Yeni Eklenen Filmler",
         "${mainUrl}/yabancidiziizle-2"                    to "Yeni Eklenen Diziler",
         "${mainUrl}/category/tavsiye-filmler-izle2"       to "Tavsiye Filmler",
         "${mainUrl}/imdb-7-puan-uzeri-filmler"            to "IMDB 7+ Filmler",
@@ -87,11 +87,11 @@ class HDFilmCehennemi : MainAPI() {
         val poster      = fixUrlNull(document.select("aside.post-info-poster img.lazyload").lastOrNull()?.attr("data-src"))
         val tags        = document.select("div.post-info-genres a").map { it.text() }
         val year        = document.selectFirst("div.post-info-year-country a")?.text()?.trim()?.toIntOrNull()
-        val tvType      = if (document.select("div.seasons").isNullOrEmpty()) TvType.Movie else TvType.TvSeries
+        val tvType      = if (document.select("div.seasons").isEmpty()) TvType.Movie else TvType.TvSeries
         val description = document.selectFirst("article.post-info-content > p")?.text()?.trim()
         val rating      = document.selectFirst("div.post-info-imdb-rating span")?.text()?.substringBefore("(")?.trim()?.toRatingInt()
         val actors      = document.select("div.post-info-cast a").map {
-            Actor(it.selectFirst("strong")!!.text(), it.select("img")!!.attr("data-src"))
+            Actor(it.selectFirst("strong")!!.text(), it.select("img").attr("data-src"))
         }
 
         val recommendations = document.select("div.section-slider-container div.slider-slide").mapNotNull {
@@ -112,12 +112,11 @@ class HDFilmCehennemi : MainAPI() {
                 val epEpisode = Regex("""(\d+)\. ?Bölüm""").find(epName)?.groupValues?.get(1)?.toIntOrNull()
                 val epSeason  = Regex("""(\d+)\. ?Sezon""").find(epName)?.groupValues?.get(1)?.toIntOrNull() ?: 1
 
-                Episode(
-                    data    = epHref,
-                    name    = epName,
-                    season  = epSeason,
-                    episode = epEpisode
-                )
+                newEpisode(epHref) {
+                    this.name = epName
+                    this.season = epSeason
+                    this.episode = epEpisode
+                }
             }
 
             newTvSeriesLoadResponse(title, url, TvType.TvSeries, episodes) {
@@ -171,14 +170,14 @@ class HDFilmCehennemi : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit ): Boolean {
-        Log.d("HDCH", "data » ${data}")
+        Log.d("HDCH", "data » $data")
         val document = app.get(data).document
 
         document.select("div.alternative-links").map { element ->
             element to element.attr("data-lang").uppercase()
         }.forEach { (element, langCode) ->
             element.select("button.alternative-link").map { button ->
-                button!!.text().replace("(HDrip Xbet)", "").trim() + " $langCode" to button.attr("data-video")
+                button.text().replace("(HDrip Xbet)", "").trim() + " $langCode" to button.attr("data-video")
             }.forEach { (source, videoID) ->
                 val apiGet = app.get(
                     "${mainUrl}/video/$videoID/",
@@ -189,12 +188,12 @@ class HDFilmCehennemi : MainAPI() {
                     referer = data
                 ).text
 
-                var iframe = Regex("""data-src=\\"([^\"]+)""").find(apiGet)?.groupValues?.get(1)!!.replace("\\", "")
+                var iframe = Regex("""data-src=\\"([^"]+)""").find(apiGet)?.groupValues?.get(1)!!.replace("\\", "")
                 if (iframe.contains("?rapidrame_id=")) {
                     iframe = "${mainUrl}/playerr/" + iframe.substringAfter("?rapidrame_id=")
                 }
 
-                Log.d("HDCH", "${source} » ${videoID} » ${iframe}")
+                Log.d("HDCH", "$source » $videoID » $iframe")
                 invokeLocalSource(source, iframe, subtitleCallback, callback)
             }
         }

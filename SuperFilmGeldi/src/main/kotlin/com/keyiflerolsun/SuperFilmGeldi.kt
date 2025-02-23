@@ -110,10 +110,10 @@ class SuperFilmGeldi : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("SFG", "data » ${data}")
+        Log.d("SFG", "data » $data")
         val document = app.get(data).document
-        var iframe   = fixUrlNull(document.selectFirst("div#vast iframe")?.attr("src")) ?: return false
-        Log.d("SFG", "iframe » ${iframe}")
+        val iframe   = fixUrlNull(document.selectFirst("div#vast iframe")?.attr("src")) ?: return false
+        Log.d("SFG", "iframe » $iframe")
 
         if (iframe.contains("mix") and iframe.contains("index.php?data=")) {
             val iSource  = app.get(iframe, referer="${mainUrl}/").text
@@ -128,7 +128,7 @@ class SuperFilmGeldi : MainAPI() {
             }
 
             val m3uLink = iframe.substringBefore("/player") + mixPoint + endPoint
-            Log.d("SFG", "m3uLink » ${m3uLink}")
+            Log.d("SFG", "m3uLink » $m3uLink")
 
             callback.invoke(
                 ExtractorLink(

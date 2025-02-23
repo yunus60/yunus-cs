@@ -20,7 +20,7 @@ open class YildizKisaFilm : ExtractorApi() {
             url.substringAfter("?data=")
         }
         val postUrl = "${mainUrl}/player/index.php?data=${vidId}&do=getVideo"
-        Log.d("Kekik_${this.name}", "postUrl » ${postUrl}")
+        Log.d("Kekik_${this.name}", "postUrl » $postUrl")
 
         val response = app.post(
             postUrl,

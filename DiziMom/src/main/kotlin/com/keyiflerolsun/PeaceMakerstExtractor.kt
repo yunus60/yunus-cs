@@ -16,7 +16,7 @@ open class PeaceMakerst : ExtractorApi() {
         val m3uLink:String?
         val extRef  = referer ?: ""
         val postUrl = "${url}?do=getVideo"
-        Log.d("Kekik_${this.name}", "postUrl » ${postUrl}")
+        Log.d("Kekik_${this.name}", "postUrl » $postUrl")
 
         val response = app.post(
             postUrl,
@@ -42,10 +42,10 @@ open class PeaceMakerst : ExtractorApi() {
         } else {
             val videoResponse = response.parsedSafe<PeaceResponse>() ?: throw ErrorLoadingException("peace response is null")
             val videoSources  = videoResponse.videoSources
-            if (videoSources.isNotEmpty()) {
-                m3uLink = videoSources.lastOrNull()?.file
+            m3uLink = if (videoSources.isNotEmpty()) {
+                videoSources.lastOrNull()?.file
             } else {
-                m3uLink = null
+                null
             }
         }
 

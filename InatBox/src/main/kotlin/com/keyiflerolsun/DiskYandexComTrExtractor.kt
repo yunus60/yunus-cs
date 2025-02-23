@@ -13,7 +13,7 @@ class DiskYandexComTr : ExtractorApi() {
     override val requiresReferer: Boolean = false
 
     // Regex pattern to extract master-playlist.m3u8 URLs
-    private val masterPlaylistRegex = Pattern.compile("https?:\\/\\/[^\\s\"]*?master-playlist\\.m3u8")
+    private val masterPlaylistRegex = Pattern.compile("https?://[^\\s\"]*?master-playlist\\.m3u8")
 
     override suspend fun getUrl(url: String, referer: String?, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit) {
         // Create a request with headers

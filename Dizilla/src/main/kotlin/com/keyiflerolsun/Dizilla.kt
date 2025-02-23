@@ -34,7 +34,7 @@ class Dizilla : MainAPI() {
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        val document = app.get("${request.data}").document
+        val document = app.get(request.data).document
         val home     = if (request.data.contains("dizi-turu")) { 
             document.select("div.grid-cols-3 a").mapNotNull { it.diziler() }
         } else {
@@ -55,7 +55,7 @@ class Dizilla : MainAPI() {
     private suspend fun Element.sonBolumler(): SearchResponse? {
         val name   = this.selectFirst("h2")?.text() ?: return null
         val epName = this.selectFirst("div.opacity-80")!!.text().replace(". Sezon ", "x").replace(". Bölüm", "")
-        val title  = "${name} - ${epName}"
+        val title  = "$name - $epName"
 
         val epDoc     = app.get(this.attr("href")).document
         val href      = fixUrlNull(epDoc.selectFirst("a.relative")?.attr("href")) ?: return null
@@ -122,7 +122,7 @@ class Dizilla : MainAPI() {
         val description = document.selectFirst("div.mv-det-p")?.text()?.trim() ?: document.selectFirst("div.w-full div.text-base")?.text()?.trim()
         val tags        = document.select("[href*='dizi-turu']").map { it.text() }
         val rating      = document.selectFirst("a[href*='imdb.com'] span")?.text()?.trim().toRatingInt()
-        val duration    = Regex("(\\d+)").find(document.select("div.gap-3 span.text-sm").get(1).text() ?: "")?.value?.toIntOrNull()
+        val duration    = Regex("(\\d+)").find(document.select("div.gap-3 span.text-sm")[1].text())?.value?.toIntOrNull()
         val actors      = document.select("[href*='oyuncu']").map {
             Actor(it.text())
         }
@@ -139,17 +139,16 @@ class Dizilla : MainAPI() {
                 val epEpisode     = episodeElement.selectFirst("a.opacity-60")?.text()?.toIntOrNull()
         
                 val parentDiv   = episodeElement.parent()
-                val seasonClass = parentDiv?.className()?.split(" ")?.find { it.startsWith("szn") }
+                val seasonClass = parentDiv?.className()?.split(" ")?.find { className -> className.startsWith("szn") }
                 val epSeason    = seasonClass?.substringAfter("szn")?.toIntOrNull()
-        
-                episodeList.add(Episode(
-                    data        = epHref,
-                    name        = epName,
-                    season      = epSeason,
-                    episode     = epEpisode,
-                    description = epDescription,
-                    posterUrl   = epPoster
-                ))
+
+                episodeList.add(newEpisode(epHref) {
+                    this.name = epName
+                    this.season = epSeason
+                    this.episode = epEpisode
+                    this.description = epDescription
+                    this.posterUrl = epPoster
+                })
             }
         
             epDoc.select("div.dub-episodes div.cursor-pointer").forEach epDub@ { dubEpisodeElement ->
@@ -160,17 +159,16 @@ class Dizilla : MainAPI() {
                 val epEpisode     = dubEpisodeElement.selectFirst("a.opacity-60")?.text()?.toIntOrNull()
         
                 val parentDiv   = dubEpisodeElement.parent()
-                val seasonClass = parentDiv?.className()?.split(" ")?.find { it.startsWith("szn") }
+                val seasonClass = parentDiv?.className()?.split(" ")?.find { className -> className.startsWith("szn") }
                 val epSeason    = seasonClass?.substringAfter("szn")?.toIntOrNull()
-        
-                episodeList.add(Episode(
-                    data        = epHref,
-                    name        = "${epName} Dublaj",
-                    season      = epSeason,
-                    episode     = epEpisode,
-                    description = epDescription,
-                    posterUrl   = epPoster
-                ))
+
+                episodeList.add(newEpisode(epHref) {
+                    this.name = "$epName Dublaj"
+                    this.season = epSeason
+                    this.episode = epEpisode
+                    this.description = epDescription
+                    this.posterUrl = epPoster
+                })
             }
         }
 
@@ -186,7 +184,7 @@ class Dizilla : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("DZL", "data » ${data}")
+        Log.d("DZL", "data » $data")
         val document = app.get(data).document
         val iframes  = mutableSetOf<String>()
 
@@ -194,7 +192,7 @@ class Dizilla : MainAPI() {
         if (alternatifler.isEmpty()) {
             val iframe = fixUrlNull(document.selectFirst("div#playerLsDizilla iframe")?.attr("src")) ?: return false
 
-            Log.d("DZL", "iframe » ${iframe}")
+            Log.d("DZL", "iframe » $iframe")
 
             loadExtractor(iframe, "${mainUrl}/", subtitleCallback, callback)
         } else {
@@ -205,7 +203,7 @@ class Dizilla : MainAPI() {
                 if (iframe in iframes) { return@forEach }
                 iframes.add(iframe)
 
-                Log.d("DZL", "iframe » ${iframe}")
+                Log.d("DZL", "iframe » $iframe")
 
                 loadExtractor(iframe, "${mainUrl}/", subtitleCallback, callback)
             }

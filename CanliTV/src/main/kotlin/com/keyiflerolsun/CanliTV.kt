@@ -1,6 +1,6 @@
 // ! https://codeberg.org/cloudstream/cloudstream-extensions-multilingual/src/branch/master/FreeTVProvider/src/main/kotlin/com/lagradost/FreeTVProvider.kt
 
-package com.lagradost
+package com.keyiflerolsun
 
 import android.util.Log
 import com.lagradost.cloudstream3.*
@@ -32,15 +32,16 @@ class CanliTV : MainAPI() {
                     val chGroup     = kanal.attributes["group-title"].toString()
                     val nation      = kanal.attributes["tvg-country"].toString()
 
-                    LiveSearchResponse(
-                        name      = channelname,
-                        url       = LoadData(streamurl, channelname, posterurl, chGroup, nation).toJson(),
-                        apiName   = this@CanliTV.name,
-                        type      = TvType.Live,
-                        posterUrl = posterurl,
-                        lang      = nation
-                    )
+                    newLiveSearchResponse(
+                        channelname,
+                        LoadData(streamurl, channelname, posterurl, chGroup, nation).toJson(),
+                        type = TvType.Live
+                    ) {
+                        this.posterUrl = posterurl
+                        this.lang = nation
+                    }
                 }
+
 
                 HomePageList(title, show, isHorizontalImages = true)
             },
@@ -58,14 +59,15 @@ class CanliTV : MainAPI() {
             val chGroup     = kanal.attributes["group-title"].toString()
             val nation      = kanal.attributes["tvg-country"].toString()
 
-            LiveSearchResponse(
-                name      = channelname,
-                url       = LoadData(streamurl, channelname, posterurl, chGroup, nation).toJson(),
-                apiName   = this@CanliTV.name,
-                type      = TvType.Live,
-                posterUrl = posterurl,
-                lang      = nation
-            )
+            newLiveSearchResponse(
+                channelname,
+                LoadData(streamurl, channelname, posterurl, chGroup, nation).toJson(),
+                type = TvType.Live
+            ) {
+                this.posterUrl = posterurl
+                this.lang = nation
+            }
+
         }
     }
 
@@ -73,12 +75,10 @@ class CanliTV : MainAPI() {
 
     override suspend fun load(url: String): LoadResponse {
         val loadData = fetchDataFromUrlOrJson(url)
-
-        val nation:String
-        if (loadData.group == "NSFW") {
-            nation = "⚠️🔞🔞🔞 » ${loadData.group} | ${loadData.nation} « 🔞🔞🔞⚠️"
+        val nation:String = if (loadData.group == "NSFW") {
+            "⚠️🔞🔞🔞 » ${loadData.group} | ${loadData.nation} « 🔞🔞🔞⚠️"
         } else {
-            nation = "» ${loadData.group} | ${loadData.nation} «"
+            "» ${loadData.group} | ${loadData.nation} «"
         }
 
         val kanallar        = IptvPlaylistParser().parseM3U(app.get(mainUrl).text)
@@ -94,36 +94,33 @@ class CanliTV : MainAPI() {
                 val rcChGroup     = kanal.attributes["group-title"].toString()
                 val rcNation      = kanal.attributes["tvg-country"].toString()
 
-                recommendations.add(LiveSearchResponse(
-                    name      = rcChannelName,
-                    url       = LoadData(rcStreamUrl, rcChannelName, rcPosterUrl, rcChGroup, rcNation).toJson(),
-                    apiName   = this@CanliTV.name,
-                    type      = TvType.Live,
-                    posterUrl = rcPosterUrl,
-                    lang      = rcNation,
-                ))
+                recommendations.add(newLiveSearchResponse(
+                    rcChannelName,
+                    LoadData(rcStreamUrl, rcChannelName, rcPosterUrl, rcChGroup, rcNation).toJson(),
+                    type = TvType.Live
+                ) {
+                    this.posterUrl = rcPosterUrl
+                    this.lang = rcNation
+                })
+
             }
         }
 
-        return LiveStreamLoadResponse(
-            name            = loadData.title,
-            url             = loadData.url,
-            apiName         = this.name,
-            dataUrl         = url,
-            posterUrl       = loadData.poster,
-            plot            = nation,
-            tags            = listOf(loadData.group, loadData.nation),
-            recommendations = recommendations
-        )
+        return newLiveStreamLoadResponse(loadData.title, loadData.url, url) {
+            this.posterUrl = loadData.poster
+            this.plot = nation
+            this.tags = listOf(loadData.group, loadData.nation)
+            this.recommendations = recommendations
+        }
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
         val loadData = fetchDataFromUrlOrJson(data)
-        Log.d("IPTV", "loadData » ${loadData}")
+        Log.d("IPTV", "loadData » $loadData")
 
         val kanallar = IptvPlaylistParser().parseM3U(app.get(mainUrl).text)
         val kanal    = kanallar.items.first { it.url == loadData.url }
-        Log.d("IPTV", "kanal » ${kanal}")
+        Log.d("IPTV", "kanal » $kanal")
 
         callback.invoke(
             ExtractorLink(
@@ -290,37 +287,6 @@ class IptvPlaylistParser {
      */
     private fun String.getUrl(): String? {
         return split("|").firstOrNull()?.replaceQuotesAndTrim()
-    }
-
-    /**
-     * Get url parameters.
-     *
-     * Example:-
-     *
-     * Input:
-     * ```
-     * http://192.54.104.122:8080/d/abcdef/video.mp4|User-Agent=Mozilla&Referer=CustomReferrer
-     * ```
-     *
-     * Result will be equivalent to kotlin map:
-     * ```Kotlin
-     * mapOf(
-     *   "User-Agent" to "Mozilla",
-     *   "Referer" to "CustomReferrer"
-     * )
-     * ```
-     */
-    private fun String.getUrlParameters(): Map<String, String> {
-        val urlRegex      = Regex("^(.*)\\|", RegexOption.IGNORE_CASE)
-        val headersString = replace(urlRegex, "").replaceQuotesAndTrim()
-
-        return headersString
-            .split("&")
-            .mapNotNull {
-                val pair = it.split("=")
-                if (pair.size == 2) pair.first() to pair.last() else null
-            }
-            .toMap()
     }
 
     /**

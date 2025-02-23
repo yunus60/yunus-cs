@@ -97,12 +97,12 @@ class JetFilmizle : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("JTF", "data » ${data}")
+        Log.d("JTF", "data » $data")
         val document = app.get(data).document
 
         val iframes    = mutableListOf<String>()
         val mainIframe = fixUrlNull(document.selectFirst("div#movie iframe")?.attr("data-src")) ?: fixUrlNull(document.selectFirst("div#movie iframe")?.attr("data")) ?: fixUrlNull(document.selectFirst("div#movie iframe")?.attr("src"))
-        Log.d("JTF", "mainIframe » ${mainIframe}")
+        Log.d("JTF", "mainIframe » $mainIframe")
         if (mainIframe != null) {
             iframes.add(mainIframe)
         }
@@ -112,14 +112,14 @@ class JetFilmizle : MainAPI() {
             if (source.lowercase().contains("fragman")) return@forEach
 
             val movDoc = app.get(it.attr("href")).document
-            var iframe = fixUrlNull(movDoc.selectFirst("div#movie iframe")?.attr("data-src")) ?: fixUrlNull(movDoc.selectFirst("div#movie iframe")?.attr("data")) ?: fixUrlNull(movDoc.selectFirst("div#movie iframe")?.attr("src"))
-            Log.d("JTF", "iframe » ${iframe}")
+            val iframe = fixUrlNull(movDoc.selectFirst("div#movie iframe")?.attr("data-src")) ?: fixUrlNull(movDoc.selectFirst("div#movie iframe")?.attr("data")) ?: fixUrlNull(movDoc.selectFirst("div#movie iframe")?.attr("src"))
+            Log.d("JTF", "iframe » $iframe")
 
             if (iframe != null) {
                 iframes.add(iframe)
             } else {
-                movDoc.select("div#movie p a").forEach { link ->
-                    var downloadLink = fixUrlNull(link.attr("href")) ?: return@forEach
+                movDoc.select("div#movie p a").forEach downloadLinkForEach@{ link ->
+                    val downloadLink = fixUrlNull(link.attr("href")) ?: return@downloadLinkForEach
                     iframes.add(downloadLink)
                 }
             }
@@ -127,10 +127,10 @@ class JetFilmizle : MainAPI() {
 
         for (iframe in iframes) {
             if (iframe.contains("jetv.xyz")) {
-                Log.d("JTF", "jetv » ${iframe}")
+                Log.d("JTF", "jetv » $iframe")
                 val jetvDoc    = app.get(iframe).document
                 val jetvIframe = fixUrlNull(jetvDoc.selectFirst("iframe")?.attr("src")) ?: continue
-                Log.d("JTF", "jetvIframe » ${jetvIframe}")
+                Log.d("JTF", "jetvIframe » $jetvIframe")
 
                 loadExtractor(jetvIframe, "${mainUrl}/", subtitleCallback, callback)
             } else {

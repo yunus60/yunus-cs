@@ -8,7 +8,6 @@ import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import okhttp3.Interceptor
-import okhttp3.Response
 
 class RecTV : MainAPI() {
     override var mainUrl              = "https://c.prectv34.sbs"
@@ -20,7 +19,7 @@ class RecTV : MainAPI() {
     override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Movie, TvType.Live, TvType.TvSeries)
 
-    val swKey = "4F5A9C3D9A86FA54EACEDDD635185/c3c5bd17-e37b-4b94-a944-8a3688a30452"
+    private val swKey = "4F5A9C3D9A86FA54EACEDDD635185/c3c5bd17-e37b-4b94-a944-8a3688a30452"
 
     override val mainPage = mainPageOf(
         "${mainUrl}/api/channel/by/filtres/0/0/SAYFA/${swKey}/"      to "Canlı",
@@ -40,24 +39,20 @@ class RecTV : MainAPI() {
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        val page = page - 1
+        @Suppress("NAME_SHADOWING") val page = page - 1
 
-        val url  = request.data.replace("SAYFA", "${page}")
+        val url  = request.data.replace("SAYFA", "$page")
         val home = app.get(url, headers=mapOf("user-agent" to "okhttp/4.12.0"))
 
-        val movies = AppUtils.tryParseJson<List<RecItem>>(home.text)!!.mapNotNull { item ->
+        val movies = AppUtils.tryParseJson<List<RecItem>>(home.text)!!.map { item ->
             val toDict = jacksonObjectMapper().writeValueAsString(item)
 
             if (item.label != "CANLI" && item.label != "Canlı") {
-                newMovieSearchResponse(item.title, "${toDict}", TvType.Movie) { this.posterUrl = item.image }
+                newMovieSearchResponse(item.title, toDict, TvType.Movie) { this.posterUrl = item.image }
             } else {
-                LiveSearchResponse(
-                    name      = item.title,
-                    url       = "${toDict}",
-                    apiName   = this@RecTV.name,
-                    type      = TvType.Live,
-                    posterUrl = item.image
-                )
+                newLiveSearchResponse(item.title, toDict, TvType.Live) {
+                    this.posterUrl = item.image
+                }
             }
         }
 
@@ -109,16 +104,15 @@ class RecTV : MainAPI() {
             val numberRegex = Regex("\\d+")
 
             for (sezon in sezonlar) {
-                var seasonDubStatus = if(sezon.title.contains("altyazı",ignoreCase = true)) DubStatus.Subbed else if(sezon.title.contains("dublaj",ignoreCase = true)) DubStatus.Dubbed else DubStatus.None
+                val seasonDubStatus = if(sezon.title.contains("altyazı",ignoreCase = true)) DubStatus.Subbed else if(sezon.title.contains("dublaj",ignoreCase = true)) DubStatus.Dubbed else DubStatus.None
                 for (bolum in sezon.episodes) {
-                    episodes.getOrPut(seasonDubStatus,{ mutableListOf() }).add(Episode(
-                        data        = bolum.sources.first().url,
-                        name        = bolum.title,
-                        season      = numberRegex.find(sezon.title)?.value?.toIntOrNull(),
-                        episode     = numberRegex.find(bolum.title)?.value?.toIntOrNull(),
-                        description = sezon.title.substringAfter(".S "),
-                        posterUrl   = veri.image
-                    ))
+                    episodes.getOrPut(seasonDubStatus) { mutableListOf() }.add(newEpisode(bolum.sources.first().url) {
+                        this.name = bolum.title
+                        this.season = numberRegex.find(sezon.title)?.value?.toIntOrNull()
+                        this.episode = numberRegex.find(bolum.title)?.value?.toIntOrNull()
+                        this.description = sezon.title.substringAfter(".S ")
+                        this.posterUrl = veri.image
+                    })
                 }
             }
 
@@ -132,8 +126,8 @@ class RecTV : MainAPI() {
             }
         }
 
-        if (veri.label != "CANLI" && veri.label != "Canlı") {
-            return newMovieLoadResponse(veri.title, url, TvType.Movie, url) {
+        return if (veri.label != "CANLI" && veri.label != "Canlı") {
+            newMovieLoadResponse(veri.title, url, TvType.Movie, url) {
                 this.posterUrl = veri.image
                 this.plot      = veri.description
                 this.year      = veri.year
@@ -141,25 +135,21 @@ class RecTV : MainAPI() {
                 this.rating    = "${veri.rating}".toRatingInt()
             }
         } else {
-            return LiveStreamLoadResponse(
-                name      = veri.title,
-                url       = url,
-                apiName   = this.name,
-                dataUrl   = url,
-                posterUrl = veri.image,
-                plot      = veri.description,
-                tags      = veri.genres?.map { it.title },
-            )
+            newLiveStreamLoadResponse(veri.title, url, url) {
+                this.posterUrl = veri.image
+                this.plot      = veri.description
+                this.tags      = veri.genres?.map { it.title }
+            }
         }
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
         if (data.startsWith("http")) {
-            Log.d("RCTV", "data » ${data}")
+            Log.d("RCTV", "data » $data")
             callback.invoke(
                 ExtractorLink(
-                    source  = "${this.name}",
-                    name    = "${this.name}",
+                    source  = this.name,
+                    name    = this.name,
                     url     = data,
                     referer = "https://twitter.com/",
                     quality = Qualities.Unknown.value,
@@ -172,10 +162,10 @@ class RecTV : MainAPI() {
         val veri = AppUtils.tryParseJson<RecItem>(data) ?: return false
 
         for (source in veri.sources) {
-            Log.d("RCTV", "source » ${source}")
+            Log.d("RCTV", "source » $source")
             callback.invoke(
                 ExtractorLink(
-                    source  = "${this.name}",
+                    source  = this.name,
                     name    = "${this.name} - ${source.type}",
                     url     = source.url,
                     referer = "https://twitter.com/",

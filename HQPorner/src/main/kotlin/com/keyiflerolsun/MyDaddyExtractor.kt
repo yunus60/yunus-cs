@@ -13,7 +13,7 @@ open class MyDaddy : ExtractorApi() {
 
     override suspend fun getUrl(url: String, referer: String?, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit) {
         val extRef   = referer ?: ""
-        Log.d("Kekik_${this.name}", "url » ${url}")
+        Log.d("Kekik_${this.name}", "url » $url")
 
         val document = app.get(url).document.selectFirst("script:containsData(do_pl())")?.toString()
         val jw       = document?.substringAfter("replaceAll")?.substringAfter(",")?.substringBefore(")") ?: ""

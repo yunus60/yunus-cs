@@ -10,12 +10,9 @@ import com.keyiflerolsun.entities.PlayList
 import com.keyiflerolsun.entities.PostData
 import com.keyiflerolsun.entities.SearchData
 import com.lagradost.cloudstream3.utils.AppUtils.toJson
-import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
 import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.Qualities
 import com.lagradost.cloudstream3.utils.httpsify
 import com.lagradost.cloudstream3.utils.getQualityFromName
-import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Response
 
@@ -29,13 +26,13 @@ class NetflixMirror : MainAPI() {
     override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Movie, TvType.TvSeries)
 
-    private var cookie_value = ""
+    private var cookieValue = ""
     private val headers      = mapOf("X-Requested-With" to "XMLHttpRequest")
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        cookie_value = if(cookie_value.isEmpty()) bypassVerification(mainUrl) else cookie_value
+        cookieValue = cookieValue.ifEmpty { bypassVerification(mainUrl) }
         val cookies  = mapOf(
-            "t_hash_t" to cookie_value,
+            "t_hash_t" to cookieValue,
             "ott"      to "nf",
             "hd"       to "on"
         )
@@ -49,7 +46,7 @@ class NetflixMirror : MainAPI() {
             }
         }
 
-        return HomePageResponse(allItems, false)
+        return newHomePageResponse(allItems, false)
     }
 
     private fun Element.toHomePageList(): HomePageList {
@@ -65,8 +62,8 @@ class NetflixMirror : MainAPI() {
         return HomePageList(name, items)
     }
 
-    private fun Element.toSearchResult(): SearchResponse? {
-        val id        = selectFirst("a")?.attr("data-post") ?: attr("data-post") ?: return null
+    private fun Element.toSearchResult(): SearchResponse {
+        val id        = selectFirst("a")?.attr("data-post") ?: attr("data-post")
         val posterUrl = fixUrlNull(selectFirst(".card-img-container img, .top10-img img")?.attr("data-src"))
 
         return newMovieSearchResponse("", Id(id).toJson()) {
@@ -76,9 +73,9 @@ class NetflixMirror : MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-        cookie_value = if(cookie_value.isEmpty()) bypassVerification(mainUrl) else cookie_value
+        cookieValue = cookieValue.ifEmpty { bypassVerification(mainUrl) }
         val cookies  = mapOf(
-            "t_hash_t" to cookie_value,
+            "t_hash_t" to cookieValue,
             "hd"       to "on"
         )
 
@@ -95,11 +92,11 @@ class NetflixMirror : MainAPI() {
 
     override suspend fun quickSearch(query: String): List<SearchResponse> = search(query)
 
-    override suspend fun load(url: String): LoadResponse? {
-        cookie_value = if(cookie_value.isEmpty()) bypassVerification(mainUrl) else cookie_value
+    override suspend fun load(url: String): LoadResponse {
+        cookieValue = cookieValue.ifEmpty { bypassVerification(mainUrl) }
         val id       = parseJson<Id>(url).id
         val cookies  = mapOf(
-            "t_hash_t" to cookie_value,
+            "t_hash_t" to cookieValue,
             "hd"       to "on"
         )
 
@@ -165,7 +162,7 @@ class NetflixMirror : MainAPI() {
     private suspend fun getEpisodes(title: String, eid: String, sid: String, page: Int): List<Episode> {
         val episodes = arrayListOf<Episode>()
         val cookies  = mapOf(
-            "t_hash_t" to cookie_value,
+            "t_hash_t" to cookieValue,
             "hd"       to "on"
         )
         var pg = page
@@ -195,10 +192,10 @@ class NetflixMirror : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("NTFX", "data » ${data}")
+        Log.d("NTFX", "data » $data")
         val (title, id) = parseJson<LoadData>(data)
         val cookies     = mapOf(
-            "t_hash_t" to cookie_value,
+            "t_hash_t" to cookieValue,
             "hd"       to "on"
         )
 
@@ -236,8 +233,7 @@ class NetflixMirror : MainAPI() {
         return true
     }
 
-    @Suppress("ObjectLiteralToLambda")
-    override fun getVideoInterceptor(extractorLink: ExtractorLink): Interceptor? {
+    override fun getVideoInterceptor(extractorLink: ExtractorLink): Interceptor {
         return object : Interceptor {
             override fun intercept(chain: Interceptor.Chain): Response {
                 val request = chain.request()

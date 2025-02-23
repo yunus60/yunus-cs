@@ -1,11 +1,12 @@
 // ! https://codeberg.org/coxju/cs-ext-coxju/src/branch/master/Xhamster/src/main/kotlin/com/coxju/Xhamster.kt
 
-package com.coxju
+package com.keyiflerolsun
 
 import org.jsoup.nodes.Element
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
 
+@Suppress("ClassName")
 class xHamster : MainAPI() {
     override var mainUrl              = "https://xhamster.com"
     override var name                 = "xHamster"
@@ -83,18 +84,16 @@ class xHamster : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        app.get(url = data).let { response ->
-            callback(
-                ExtractorLink(
-                    source  = name,
-                    name    = name,
-                    url     = fixUrl(response.document.selectXpath("//link[contains(@href,'.m3u8')]")[0]?.attr("href").toString()),
-                    referer = mainUrl,
-                    quality = Qualities.Unknown.value,
-                    isM3u8  = true
-                )
+        callback(
+            ExtractorLink(
+                source  = name,
+                name    = name,
+                url     = fixUrl(app.get(url = data).document.selectXpath("//link[contains(@href,'.m3u8')]")[0].attr("href")),
+                referer = mainUrl,
+                quality = Qualities.Unknown.value,
+                isM3u8  = true
             )
-        }
+        )
 
         return true
     }

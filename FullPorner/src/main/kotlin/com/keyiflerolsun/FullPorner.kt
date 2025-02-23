@@ -1,14 +1,12 @@
 // ! https://codeberg.org/coxju/cs-ext-coxju/src/branch/master/FullPorner/src/main/kotlin/com/coxju/FullPorner.kt
 // ! https://github.com/SaurabhKaperwan/CSX/blob/master/FullPorner/src/main/kotlin/com/megix/FullPorner.kt
 
-package com.coxju
+package com.keyiflerolsun
 
 import org.jsoup.nodes.Element
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
-import com.lagradost.cloudstream3.network.WebViewResolver
 import com.lagradost.cloudstream3.LoadResponse.Companion.addActors
-import org.jsoup.Jsoup
 
 class FullPorner : MainAPI() {
     override var mainUrl              = "https://fullporner.com"
@@ -79,7 +77,7 @@ class FullPorner : MainAPI() {
 
         val iframeDocument = app.get(iframeUrl).document
 
-        val videoID          = Regex("""var id = \"(.+?)\"""").find(iframeDocument.html())?.groupValues?.get(1)
+        val videoID          = Regex("""var id = "(.+?)"""").find(iframeDocument.html())?.groupValues?.get(1)
         val pornTrexDocument = app.get("https://www.porntrex.com/embed/${videoID}").document
         val matchResult      = Regex("""preview_url:\s*'([^']+)'""").find(pornTrexDocument.html())
         val poster           = matchResult?.groupValues?.get(1)
@@ -103,13 +101,13 @@ class FullPorner : MainAPI() {
         val document       = app.get(data).document
         val iframeUrl      = fixUrlNull(document.selectFirst("div.video-block div.single-video-left div.single-video iframe")?.attr("src")) ?: ""
         val iframeDocument = app.get(iframeUrl).document
-        val videoID        = Regex("""var id = \"(.+?)\"""").find(iframeDocument.html())?.groupValues?.getOrNull(1)
+        val videoID        = Regex("""var id = "(.+?)"""").find(iframeDocument.html())?.groupValues?.getOrNull(1)
 
         val extlinkList    = mutableListOf<ExtractorLink>()
 
         if (videoID != null) {
             val pornTrexDocument = app.get("https://www.porntrex.com/embed/${videoID}").document
-            val videoUrlsRegex   = Regex("""(?:video_url|video_alt_url2|video_alt_url3): \'(.+?)\',""")
+            val videoUrlsRegex   = Regex("""(?:video_url|video_alt_url2|video_alt_url3): '(.+?)',""")
             val matchResults     = videoUrlsRegex.findAll(pornTrexDocument.html())
 
             val videoUrls = matchResults.map { it.groupValues[1] }.toList()

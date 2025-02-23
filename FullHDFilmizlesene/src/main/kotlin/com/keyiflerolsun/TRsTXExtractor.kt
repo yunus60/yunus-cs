@@ -17,7 +17,7 @@ open class TRsTX : ExtractorApi() {
 
         val videoReq = app.get(url, referer=extRef).text
 
-        val file     = Regex("""file\":\"([^\"]+)""").find(videoReq)?.groupValues?.get(1) ?: throw ErrorLoadingException("File not found")
+        val file     = Regex("""file":"([^"]+)""").find(videoReq)?.groupValues?.get(1) ?: throw ErrorLoadingException("File not found")
         val postLink = "${mainUrl}/" + file.replace("\\", "")
         val rawList  = app.post(postLink, referer=extRef).parsedSafe<List<Any>>() ?: throw ErrorLoadingException("Post link not found")
 
@@ -28,9 +28,9 @@ open class TRsTX : ExtractorApi() {
                 file  = mapItem["file"]  as? String
             )
         }
-        Log.d("Kekik_${this.name}", "postJson » ${postJson}")
+        Log.d("Kekik_${this.name}", "postJson » $postJson")
 
-		val vidLinks = mutableSetOf<String>()
+        val vidLinks = mutableSetOf<String>()
         val vidMap   = mutableListOf<Map<String, String>>()
         for (item in postJson) {
             if (item.file == null || item.title == null) continue
@@ -38,8 +38,8 @@ open class TRsTX : ExtractorApi() {
             val fileUrl   = "${mainUrl}/playlist/" + item.file.substring(1) + ".txt"
             val videoData = app.post(fileUrl, referer=extRef).text
 
-			if (videoData in vidLinks) { continue }
- 			vidLinks.add(videoData)
+            if (videoData in vidLinks) { continue }
+            vidLinks.add(videoData)
 
             vidMap.add(mapOf(
                 "title"     to item.title,
@@ -49,14 +49,14 @@ open class TRsTX : ExtractorApi() {
 
 
         for (mapEntry in vidMap) {
-            Log.d("Kekik_${this.name}", "mapEntry » ${mapEntry}")
+            Log.d("Kekik_${this.name}", "mapEntry » $mapEntry")
             val title    = mapEntry["title"] ?: continue
             val m3uLink = mapEntry["videoData"] ?: continue
 
-	        callback.invoke(
+            callback.invoke(
                 ExtractorLink(
                     source  = this.name,
-                    name    = "${this.name} - ${title}",
+                    name    = "${this.name} - $title",
                     url     = m3uLink,
                     referer = extRef,
                     quality = Qualities.Unknown.value,

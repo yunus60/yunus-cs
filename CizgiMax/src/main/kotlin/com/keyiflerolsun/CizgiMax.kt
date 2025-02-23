@@ -43,19 +43,19 @@ class CizgiMax : MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-        val response = app.get("${mainUrl}/ajaxservice/index.php?qr=${query}").parsedSafe<SearchResult>()?.data?.result ?: return listOf<SearchResponse>()
+        val response = app.get("${mainUrl}/ajaxservice/index.php?qr=${query}").parsedSafe<SearchResult>()?.data?.result ?: return listOf()
 
         return response.mapNotNull { result ->
-            if (result.s_name.contains(".Bölüm") || result.s_name.contains(".Sezon") || result.s_name.contains("-Sezon") || result.s_name.contains("-izle")) {
+            if (result.sName.contains(".Bölüm") || result.sName.contains(".Sezon") || result.sName.contains("-Sezon") || result.sName.contains("-izle")) {
                 return@mapNotNull null
             }
 
             newTvSeriesSearchResponse(
-                result.s_name,
-                fixUrl(result.s_link),
+                result.sName,
+                fixUrl(result.sLink),
                 TvType.Cartoon
             ) {
-                this.posterUrl = fixUrlNull(result.s_image)
+                this.posterUrl = fixUrlNull(result.sImage)
             }
         }
     }
@@ -79,12 +79,11 @@ class CizgiMax : MainAPI() {
             val seasonName = it.selectFirst("span.season-name")?.text()?.trim() ?: ""
             val epSeason   = Regex("""(\d+)\.Sezon""").find(seasonName)?.groupValues?.get(1)?.toIntOrNull() ?: 1
 
-            Episode(
-                data    = epHref,
-                name    = epName,
-                season  = epSeason,
-                episode = epEpisode
-            )
+            newEpisode(epHref) {
+                this.name = epName
+                this.season = epSeason
+                this.episode = epEpisode
+            }
         }
 
         return newTvSeriesLoadResponse(title, url, TvType.Cartoon, episodes) {
@@ -96,12 +95,12 @@ class CizgiMax : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("CZGM", "data » ${data}")
+        Log.d("CZGM", "data » $data")
         val document = app.get(data).document
 
         document.select("ul.linkler li").forEach {
-            var iframe = fixUrlNull(it.selectFirst("a")?.attr("data-frame")) ?: return@forEach
-            Log.d("CZGM", "iframe » ${iframe}")
+            val iframe = fixUrlNull(it.selectFirst("a")?.attr("data-frame")) ?: return@forEach
+            Log.d("CZGM", "iframe » $iframe")
 
             loadExtractor(iframe, "${mainUrl}/", subtitleCallback, callback)
         }

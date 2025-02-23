@@ -1,6 +1,6 @@
 // ! https://github.com/phisher98/CXXX/blob/master/spankbang/src/main/kotlin/com/Spankbang/spankbang.kt
 
-package com.coxju
+package com.keyiflerolsun
 
 import android.util.Log
 import org.jsoup.nodes.*
@@ -63,7 +63,7 @@ class SpankBang : MainAPI() {
     }
 
     private fun Element.toSearchResult(): SearchResponse? {
-        val title     = fixTitle(this.select("div.name-and-menu-wrapper a")!!.text()) ?: return null
+        val title     = fixTitle(this.select("div.name-and-menu-wrapper a").text())
         val href      = fixUrlNull(this.selectFirst("a")?.attr("href")) ?: return null
         val posterUrl = fixUrlNull(this.select("picture img").attr("data-src"))
 
@@ -95,7 +95,7 @@ class SpankBang : MainAPI() {
         val title           = document.selectFirst("div#video h1")?.text()?.trim() ?: return null
         val poster          = fixUrlNull(document.selectFirst("meta[property='og:image']")?.attr("content"))
         val description     = document.selectFirst("a[href*='join']")?.text()?.trim() ?: title
-        val year            = Regex("""\"uploadDate\":\s*\"(\d{4})""").find(document.html())?.groupValues?.get(1)?.toIntOrNull()
+        val year            = Regex(""""uploadDate":\s*"(\d{4})""").find(document.html())?.groupValues?.get(1)?.toIntOrNull()
         val tags            = document.select("div.searches a").map { it.text() }
         val rating          = document.selectFirst("span.rate")?.text()?.trim()?.substringBefore("%")?.toRatingInt()?.div(10)
         val duration        = document.selectFirst("meta[property=og:duration]")?.attr("content")?.toIntOrNull()?.div(60)
@@ -117,10 +117,10 @@ class SpankBang : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("SkBg", "data » ${data}")
+        Log.d("SkBg", "data » $data")
         val document = app.get(data).document
-        val videoUrl = Regex("""'m3u8': \['([^\'\]]+)""").find(document.html())?.groupValues?.get(1) ?: return false
-        Log.d("SkBg", "videoUrl » ${videoUrl}")
+        val videoUrl = Regex("""'m3u8': \['([^'\]]+)""").find(document.html())?.groupValues?.get(1) ?: return false
+        Log.d("SkBg", "videoUrl » $videoUrl")
 
         callback.invoke(
             ExtractorLink(

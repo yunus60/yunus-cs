@@ -38,7 +38,7 @@ class DiziYou : MainAPI() {
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        val url      = request.data.replace("SAYFA", "${page}")
+        val url      = request.data.replace("SAYFA", "$page")
         val document = app.get(url).document
         val home     = document.select("div.single-item").mapNotNull { it.toMainPageResult() }
 
@@ -79,12 +79,11 @@ class DiziYou : MainAPI() {
             val epEpisode = Regex("""(\d+)\. Bölüm""").find(epName)?.groupValues?.get(1)?.toIntOrNull()
             val epSeason  = Regex("""(\d+)\. Sezon""").find(epName)?.groupValues?.get(1)?.toIntOrNull() ?: 1
 
-            Episode(
-                data    = epHref,
-                name    = it.selectFirst("div.bolumismi")?.text()?.trim()?.replace(Regex("""[\(\)]"""), "")?.trim() ?: epName,
-                season  = epSeason,
-                episode = epEpisode
-            )
+            newEpisode(epHref) {
+                this.name = it.selectFirst("div.bolumismi")?.text()?.trim()?.replace(Regex("""[()]"""), "")?.trim() ?: epName
+                this.season = epSeason
+                this.episode = epEpisode
+            }
         }
 
         return newTvSeriesLoadResponse(title, url, TvType.TvSeries, episodes) {
@@ -99,11 +98,11 @@ class DiziYou : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("DZY", "data » ${data}")
+        Log.d("DZY", "data » $data")
         val document = app.get(data).document
 
         val itemId     = document.selectFirst("iframe#diziyouPlayer")?.attr("src")?.split("/")?.lastOrNull()?.substringBefore(".html") ?: return false
-        Log.d("DZY", "itemId » ${itemId}")
+        Log.d("DZY", "itemId » $itemId")
 
         val subTitles  = mutableListOf<DiziyouSubtitle>()
         val streamUrls = mutableListOf<DiziyouStream>()
@@ -111,7 +110,6 @@ class DiziYou : MainAPI() {
 
         document.select("span.diziyouOption").forEach {
             val optId   = it.attr("id")
-            val optName = it.text()
 
             if (optId == "turkceAltyazili") {
                 subTitles.add(DiziyouSubtitle("Turkish", "${storage}/subtitles/${itemId}/tr.vtt"))

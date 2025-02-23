@@ -66,7 +66,7 @@ class TurkAnime : MainAPI() {
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        val document = app.get("${request.data}").document
+        val document = app.get(request.data).document
         val home     = document.select("div#orta-icerik div.panel").mapNotNull { it.toMainPageResult() }
 
         return newHomePageResponse(request.name, home)
@@ -115,12 +115,11 @@ class TurkAnime : MainAPI() {
             val epTitle   = it.selectFirst("a[href*='/video/']")?.attr("title")?.trim() ?: return@mapNotNull null
             val epEpisode = Regex("""(\d+). Bölüm""").find(epTitle)?.groupValues?.get(1)?.toIntOrNull() ?: 1
 
-            Episode(
-                data    = epHref,
-                name    = epName,
-                season  = epSeason,
-                episode = epEpisode
-            )
+            newEpisode(epHref) {
+                this.name = epName
+                this.season = epSeason
+                this.episode = epEpisode
+            }
         }
 
         return newTvSeriesLoadResponse(title, url, TvType.Anime, episodes) {
@@ -142,7 +141,7 @@ class TurkAnime : MainAPI() {
         return fixUrlNull(aesLink.replace("\"", ""))
     }
 
-    private suspend fun iframe2Load(document: Document, iframe: String, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
+    private suspend fun iframe2Load(document: Document, @Suppress("UNUSED_PARAMETER") iframe: String, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit) {
         // val mainVideo = iframe2AesLink(iframe)
         // if (mainVideo != null) {
         //     val mainKey = mainVideo.split("/").last()
@@ -187,23 +186,20 @@ class TurkAnime : MainAPI() {
 
             val subFrame  = fixUrlNull(subDoc.selectFirst("iframe")?.attr("src")) ?: continue
             val subLink   = iframe2AesLink(subFrame) ?: continue
-            Log.d("TRANM", "${butonName} » ${subLink}")
+            Log.d("TRANM", "$butonName » $subLink")
 
             loadExtractor(subLink, "${mainUrl}/", subtitleCallback, callback)
         }
-
-        return true
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("TRANM", "data » ${data}")
+        Log.d("TRANM", "data » $data")
         val document  = app.get(data).document
         val iframe    = fixUrlNull(document.selectFirst("iframe")?.attr("src")) ?: return false
 
         if (iframe.contains("a-ads.com")) {
             for (button in document.select("button[onclick*='ajax/videosec']")) {
                 val butonLink = fixUrlNull(button.attr("onclick").substringAfter("IndexIcerik('").substringBefore("'")) ?: continue
-                val butonName = button.ownText().trim()
                 val subDoc    = app.get(butonLink, headers=mapOf("X-Requested-With" to "XMLHttpRequest")).document
 
                 val subFrame  = fixUrlNull(subDoc.selectFirst("iframe")?.attr("src")) ?: continue

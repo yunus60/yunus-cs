@@ -9,14 +9,13 @@ import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 import javax.crypto.spec.IvParameterSpec
-import java.nio.charset.StandardCharsets
 import kotlin.math.min
 
 /**
  * Conforming with CryptoJS AES method
  */
 // see https://gist.github.com/thackerronak/554c985c3001b16810af5fc0eb5c358f
-@Suppress("unused", "FunctionName", "SameParameterValue")
+@Suppress("unused", "SameParameterValue")
 object CryptoJS {
 
     private const val KEY_SIZE    = 256

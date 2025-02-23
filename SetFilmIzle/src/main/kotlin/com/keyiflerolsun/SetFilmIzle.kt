@@ -50,7 +50,7 @@ class SetFilmIzle : MainAPI() {
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        val document = app.get("${request.data}").document
+        val document = app.get(request.data).document
         val home     = document.select("div.items article").mapNotNull { it.toMainPageResult() }
 
         return newHomePageResponse(request.name, home)
@@ -61,10 +61,10 @@ class SetFilmIzle : MainAPI() {
         val href      = fixUrlNull(this.selectFirst("a")?.attr("href")) ?: return null
         val posterUrl = fixUrlNull(this.selectFirst("img")?.attr("data-src"))
 
-        if (href.contains("/dizi/")) {
-            return newTvSeriesSearchResponse(title, href, TvType.TvSeries) { this.posterUrl = posterUrl }
+        return if (href.contains("/dizi/")) {
+            newTvSeriesSearchResponse(title, href, TvType.TvSeries) { this.posterUrl = posterUrl }
         } else {
-            return newMovieSearchResponse(title, href, TvType.Movie) { this.posterUrl = posterUrl }
+            newMovieSearchResponse(title, href, TvType.Movie) { this.posterUrl = posterUrl }
         }
     }
 
@@ -90,10 +90,10 @@ class SetFilmIzle : MainAPI() {
         val href      = fixUrlNull(this.selectFirst("a")?.attr("href")) ?: return null
         val posterUrl = fixUrlNull(this.selectFirst("img")?.attr("data-src"))
 
-        if (href.contains("/dizi/")) {
-            return newTvSeriesSearchResponse(title, href, TvType.TvSeries) { this.posterUrl = posterUrl }
+        return if (href.contains("/dizi/")) {
+            newTvSeriesSearchResponse(title, href, TvType.TvSeries) { this.posterUrl = posterUrl }
         } else {
-            return newMovieSearchResponse(title, href, TvType.Movie) { this.posterUrl = posterUrl }
+            newMovieSearchResponse(title, href, TvType.Movie) { this.posterUrl = posterUrl }
         }
     }
 
@@ -111,7 +111,7 @@ class SetFilmIzle : MainAPI() {
         var duration        = document.selectFirst("span.runtime")?.text()?.split(" ")?.first()?.trim()?.toIntOrNull()
         val recommendations = document.select("div.srelacionados article").mapNotNull { it.toRecommendationResult() }
         val actors          = document.select("span.valor a").map { Actor(it.text()) }
-        val trailer         = Regex("""embed\/(.*)\?rel""").find(document.html())?.groupValues?.get(1)?.let { "https://www.youtube.com/embed/$it" }
+        val trailer         = Regex("""embed/(.*)\?rel""").find(document.html())?.groupValues?.get(1)?.let { "https://www.youtube.com/embed/$it" }
 
         if (url.contains("/dizi/")) {
             year     = document.selectFirst("a[href*='/yil/']")?.text()?.trim()?.toIntOrNull()
@@ -121,15 +121,14 @@ class SetFilmIzle : MainAPI() {
                 val epHref    = fixUrlNull(it.selectFirst("h4.episodiotitle a")?.attr("href")) ?: return@mapNotNull null
                 val epName    = it.selectFirst("h4.episodiotitle a")?.ownText()?.trim() ?: return@mapNotNull null
                 val epDetail  = it.selectFirst("h4.episodiotitle a")?.ownText()?.trim() ?: return@mapNotNull null
-                val epSeason  = epDetail.substringBefore(". Sezon")?.toIntOrNull()
-                val epEpisode = epDetail.split("Sezon ").last().substringBefore(". Bölüm")?.toIntOrNull()
+                val epSeason  = epDetail.substringBefore(". Sezon").toIntOrNull()
+                val epEpisode = epDetail.split("Sezon ").last().substringBefore(". Bölüm").toIntOrNull()
 
-                Episode(
-                    data    = epHref,
-                    name    = epName,
-                    season  = epSeason,
-                    episode = epEpisode
-                )
+                newEpisode(epHref) {
+                    this.name    = epName
+                    this.season  = epSeason
+                    this.episode = epEpisode
+                }
             }
 
             return newTvSeriesLoadResponse(title, url, TvType.TvSeries, episodes) {
@@ -163,14 +162,14 @@ class SetFilmIzle : MainAPI() {
         val href      = fixUrlNull(this.selectFirst("a")?.attr("href")) ?: return null
         val posterUrl = fixUrlNull(this.selectFirst("a img")?.attr("data-src"))
 
-        if (href.contains("/dizi/")) {
-            return newTvSeriesSearchResponse(title, href, TvType.TvSeries) { this.posterUrl = posterUrl }
+        return if (href.contains("/dizi/")) {
+            newTvSeriesSearchResponse(title, href, TvType.TvSeries) { this.posterUrl = posterUrl }
         } else {
-            return newMovieSearchResponse(title, href, TvType.Movie) { this.posterUrl = posterUrl }
+            newMovieSearchResponse(title, href, TvType.Movie) { this.posterUrl = posterUrl }
         }
     }
 
-    private fun sendMultipartRequest(nonce: String, postId: String, playerName: String, partKey: String, referer: String): Response? {
+    private fun sendMultipartRequest(nonce: String, postId: String, playerName: String, partKey: String, referer: String): Response {
         val formData = mapOf(
             "action"      to "get_video_url",
             "nonce"       to nonce,
@@ -198,13 +197,13 @@ class SetFilmIzle : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("STF", "data » ${data}")
+        Log.d("STF", "data » $data")
         val document = app.get(data).document
 
         document.select("nav.player a").map { element ->
-            val sourceId = element.attr("data-post-id") ?: ""
-            val name     = element.attr("data-player-name") ?: ""
-            val partKey  = element.attr("data-part-key") ?: ""
+            val sourceId = element.attr("data-post-id")
+            val name     = element.attr("data-player-name")
+            val partKey  = element.attr("data-part-key")
 
             Triple(name, sourceId, partKey)
         }.forEach { (name, sourceId, partKey) ->
@@ -213,9 +212,9 @@ class SetFilmIzle : MainAPI() {
 
             val nonce        = Regex("""nonce: '(.*)'""").find(document.html())?.groupValues?.get(1) ?: ""
             val multiPart    = sendMultipartRequest(nonce, sourceId, name, partKey, data)
-            val sourceBody   = multiPart?.body?.string() ?: return@forEach
+            val sourceBody   = multiPart.body.string()
             val sourceIframe = JSONObject(sourceBody).optJSONObject("data")?.optString("url") ?: return@forEach
-            Log.d("STF", "iframe » ${sourceIframe}")
+            Log.d("STF", "iframe » $sourceIframe")
 
             if (sourceIframe.contains("explay.store") || sourceIframe.contains("setplay.site")) {
                 loadExtractor("${sourceIframe}?partKey=${partKey}", "${mainUrl}/", subtitleCallback, callback)

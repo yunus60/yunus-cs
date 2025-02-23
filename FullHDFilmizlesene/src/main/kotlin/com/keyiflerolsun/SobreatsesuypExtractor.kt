@@ -17,7 +17,7 @@ open class Sobreatsesuyp : ExtractorApi() {
 
         val videoReq = app.get(url, referer = extRef).text
 
-        val file     = Regex("""file\":\"([^\"]+)""").find(videoReq)?.groupValues?.get(1) ?: throw ErrorLoadingException("File not found")
+        val file     = Regex("""file":"([^"]+)""").find(videoReq)?.groupValues?.get(1) ?: throw ErrorLoadingException("File not found")
         val postLink = "${mainUrl}/" + file.replace("\\", "")
         val rawList  = app.post(postLink, referer = extRef).parsedSafe<List<Any>>() ?: throw ErrorLoadingException("Post link not found")
 
@@ -28,14 +28,14 @@ open class Sobreatsesuyp : ExtractorApi() {
                 file  = mapItem["file"]  as? String
             )
         }
-        Log.d("Kekik_${this.name}", "postJson » ${postJson}")
+        Log.d("Kekik_${this.name}", "postJson » $postJson")
 
         for (item in postJson) {
             if (item.file == null || item.title == null) continue
 
             val videoData = app.post("${mainUrl}/playlist/${item.file.substring(1)}.txt", referer = extRef).text
 
-	        callback.invoke(
+            callback.invoke(
                 ExtractorLink(
                     source  = this.name,
                     name    = "${this.name} - ${item.title}",
