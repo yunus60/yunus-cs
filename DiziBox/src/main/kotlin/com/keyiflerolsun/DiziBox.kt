@@ -2,6 +2,7 @@
 
 package com.keyiflerolsun
 
+import android.util.Base64
 import android.util.Log
 import org.jsoup.nodes.Element
 import com.lagradost.cloudstream3.*
@@ -9,11 +10,10 @@ import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.LoadResponse.Companion.addActors
 import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
 import com.lagradost.cloudstream3.network.CloudflareKiller
+import com.lagradost.cloudstream3.utils.StringUtils.decodeUri
 import okhttp3.Interceptor
 import okhttp3.Response
 import org.jsoup.Jsoup
-import java.net.URLDecoder
-import android.util.Base64
 
 class DiziBox : MainAPI() {
     override var mainUrl              = "https://www.dizibox.live"
@@ -21,8 +21,6 @@ class DiziBox : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "tr"
     override val hasQuickSearch       = false
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.TvSeries)
 
     // ! CloudFlare bypass
@@ -77,7 +75,7 @@ class DiziBox : MainAPI() {
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        val url      = request.data.replace("SAYFA", "${page}")
+        val url      = request.data.replace("SAYFA", "$page")
         val document = app.get(
             url,
             cookies     = mapOf(
@@ -155,12 +153,11 @@ class DiziBox : MainAPI() {
                 val epSeason  = Regex("""(\d+)\. ?Sezon""").find(epTitle)?.groupValues?.get(1)?.toIntOrNull() ?: 1
                 val epEpisode = Regex("""(\d+)\. ?Bölüm""").find(epTitle)?.groupValues?.get(1)?.toIntOrNull()
 
-                episodeList.add(Episode(
-                    data    = epHref,
-                    name    = epTitle,
-                    season  = epSeason,
-                    episode = epEpisode
-                ))
+                episodeList.add(newEpisode(epHref) {
+                    this.name = epTitle
+                    this.season = epSeason
+                    this.episode = epEpisode
+                })
             }
         }
 
@@ -176,7 +173,7 @@ class DiziBox : MainAPI() {
     }
 
     private suspend fun iframeDecode(data:String, iframe:String, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        var iframe = iframe
+        @Suppress("NAME_SHADOWING") var iframe = iframe
 
         if (iframe.contains("/player/king/king.php")) {
             iframe = iframe.replace("king.php?v=", "king.php?wmode=opaque&v=")
@@ -193,16 +190,16 @@ class DiziBox : MainAPI() {
             val subFrame = subDoc.selectFirst("div#Player iframe")?.attr("src") ?: return false
 
             val iDoc          = app.get(subFrame, referer="${mainUrl}/").text
-            val cryptData     = Regex("""CryptoJS\.AES\.decrypt\(\"(.*)\",\"""").find(iDoc)?.groupValues?.get(1) ?: return false
-            val cryptPass     = Regex("""\",\"(.*)\"\);""").find(iDoc)?.groupValues?.get(1) ?: return false
+            val cryptData     = Regex("""CryptoJS\.AES\.decrypt\("(.*)","""").find(iDoc)?.groupValues?.get(1) ?: return false
+            val cryptPass     = Regex("""","(.*)"\);""").find(iDoc)?.groupValues?.get(1) ?: return false
             val decryptedData = CryptoJS.decrypt(cryptPass, cryptData)
             val decryptedDoc  = Jsoup.parse(decryptedData)
-            val vidUrl        = Regex("""file: \'(.*)',""").find(decryptedDoc.html())?.groupValues?.get(1) ?: return false
+            val vidUrl        = Regex("""file: '(.*)',""").find(decryptedDoc.html())?.groupValues?.get(1) ?: return false
 
             callback.invoke(
                 ExtractorLink(
-                    source  = "${this.name}",
-                    name    = "${this.name}",
+                    source  = this.name,
+                    name    = this.name,
                     url     = vidUrl,
                     referer = vidUrl,
                     quality = getQualityFromName("4k"),
@@ -223,9 +220,9 @@ class DiziBox : MainAPI() {
                 interceptor = interceptor
             ).document
 
-            val atobData = Regex("""unescape\(\"(.*)\"\)""").find(subDoc.html())?.groupValues?.get(1)
+            val atobData = Regex("""unescape\("(.*)"\)""").find(subDoc.html())?.groupValues?.get(1)
             if (atobData != null) {
-                val decodedAtob = URLDecoder.decode(atobData, "utf-8")
+                val decodedAtob = atobData.decodeUri()
                 val strAtob     = String(Base64.decode(decodedAtob, Base64.DEFAULT), Charsets.UTF_8)
                 subDoc          = Jsoup.parse(strAtob)
             }
@@ -247,9 +244,9 @@ class DiziBox : MainAPI() {
                 interceptor = interceptor
             ).document
 
-            val atobData = Regex("""unescape\(\"(.*)\"\)""").find(subDoc.html())?.groupValues?.get(1)
+            val atobData = Regex("""unescape\("(.*)"\)""").find(subDoc.html())?.groupValues?.get(1)
             if (atobData != null) {
-                val decodedAtob = URLDecoder.decode(atobData, "utf-8")
+                val decodedAtob = atobData.decodeUri()
                 val strAtob     = String(Base64.decode(decodedAtob, Base64.DEFAULT), Charsets.UTF_8)
                 subDoc          = Jsoup.parse(strAtob)
             }
@@ -263,7 +260,7 @@ class DiziBox : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("DZBX", "data » ${data}")
+        Log.d("DZBX", "data » $data")
         val document = app.get(
             data,
             cookies     = mapOf(
@@ -274,12 +271,11 @@ class DiziBox : MainAPI() {
             interceptor = interceptor
         ).document
         var iframe = document.selectFirst("div#video-area iframe")?.attr("src")?: return false
-        Log.d("DZBX", "iframe » ${iframe}")
+        Log.d("DZBX", "iframe » $iframe")
 
         iframeDecode(data, iframe, subtitleCallback, callback)
 
         document.select("div.video-toolbar option[value]").forEach {
-            val altName = it.text()
             val altLink = it.attr("value")
             val subDoc  = app.get(
                 altLink,
@@ -290,8 +286,8 @@ class DiziBox : MainAPI() {
                 ),
                 interceptor = interceptor
             ).document
-            var iframe = subDoc.selectFirst("div#video-area iframe")?.attr("src")?: return false
-            Log.d("DZBX", "iframe » ${iframe}")
+            iframe = subDoc.selectFirst("div#video-area iframe")?.attr("src")?: return false
+            Log.d("DZBX", "iframe » $iframe")
 
             iframeDecode(data, iframe, subtitleCallback, callback)
         }

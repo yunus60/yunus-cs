@@ -2,6 +2,7 @@
 
 package com.keyiflerolsun
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -19,11 +20,12 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 
-open class W2MExtractor(override val mainUrl: String, val context: Context) : ExtractorApi() {
+open class W2MExtractor(override val mainUrl: String, private val context: Context) : ExtractorApi() {
     override val name            = "W2MExtractor"
     override val requiresReferer = true
     private lateinit var webView: WebView
 
+    @SuppressLint("SetJavaScriptEnabled")
     override suspend fun getUrl(url: String, referer: String?, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit) {
         withContext(Dispatchers.Main) {
             webView = WebView(context).apply {
@@ -34,8 +36,6 @@ open class W2MExtractor(override val mainUrl: String, val context: Context) : Ex
                     loadWithOverviewMode               = true
                     useWideViewPort                    = true
                     allowFileAccess                    = true
-                    databaseEnabled                    = true
-                    setSupportZoom(true)
                     builtInZoomControls                = true
                     displayZoomControls                = false
                     allowContentAccess                 = true
@@ -49,12 +49,12 @@ Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
 Object.defineProperty(navigator, 'platform', { get: () => 'Win32' });
 Object.defineProperty(navigator, 'language', { get: () => 'en-US' });
 window.chrome = { runtime: {} };
-""".trimIndent(), {}
-                )
+""".trimIndent()
+                ) {}
 
                 webViewClient = object : WebViewClient() {
                     override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
-                        val url = request?.url.toString()
+                        @Suppress("NAME_SHADOWING") val url = request?.url.toString()
                         val headers = request?.requestHeaders
 
                         Thread {

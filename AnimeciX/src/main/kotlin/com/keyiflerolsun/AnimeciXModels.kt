@@ -18,23 +18,23 @@ data class Title(
 )
 
 data class Pagination(
-    @JsonProperty("current_page") val current_page: Int,
-    @JsonProperty("last_page") val last_page: Int,
-    @JsonProperty("per_page") val per_page: Int,
+    @JsonProperty("current_page") val currentPage: Int,
+    @JsonProperty("last_page") val lastPage: Int,
+    @JsonProperty("per_page") val perPage: Int,
     @JsonProperty("data") val data: List<AnimeSearch>,
     @JsonProperty("total") val total: Int,
 )
 
 data class AnimeSearch(
     @JsonProperty("id") val id: Int,
-    @JsonProperty("title_type") val title_type: String,
+    @JsonProperty("title_type") val titleType: String,
     @JsonProperty("name") val title: String,
     @JsonProperty("poster") val poster: String?,
 )
 
 data class Anime(
     @JsonProperty("id") val id: Int,
-    @JsonProperty("title_type") val title_type: String,
+    @JsonProperty("title_type") val titleType: String,
     @JsonProperty("name") val title: String,
     @JsonProperty("poster") val poster: String,
     @JsonProperty("description") val description: String,
@@ -43,7 +43,7 @@ data class Anime(
     @JsonProperty("genres") val tags: List<Genre>,
     @JsonProperty("trailer") val trailer: String?,
     @JsonProperty("credits") val actors: List<Credit>,
-    @JsonProperty("season_count") val season_count: Int, //Unrealiable?
+    @JsonProperty("season_count") val seasonCount: Int, //Unrealiable?
     @JsonProperty("seasons") val seasons: List<Season>,
     @JsonProperty("videos") val videos: List<Video>
 )
@@ -58,8 +58,8 @@ data class Credit(
 )
 
 data class Video(
-    @JsonProperty("episode_num") val episode_num: Int?,
-    @JsonProperty("season_num") val season_num: Int?,
+    @JsonProperty("episode_num") val episodeNum: Int?,
+    @JsonProperty("season_num") val seasonNum: Int?,
     @JsonProperty("url") val url: String,
 )
 

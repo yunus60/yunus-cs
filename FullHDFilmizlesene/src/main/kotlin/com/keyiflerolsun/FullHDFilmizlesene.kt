@@ -21,8 +21,6 @@ class FullHDFilmizlesene : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "tr"
     override val hasQuickSearch       = false
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Movie)
 
     override val mainPage = mainPageOf(
@@ -87,7 +85,7 @@ class FullHDFilmizlesene : MainAPI() {
         val tags            = document.select("a[rel='category tag']").map { it.text() }
         val rating          = document.selectFirst("div.puanx-puan")?.text()?.split(" ")?.last()?.toRatingInt()
         val duration        = document.selectFirst("span.sure")?.text()?.split(" ")?.get(0)?.trim()?.toIntOrNull()
-        val trailer         = Regex("""embedUrl\": \"(.*)\"""").find(document.html())?.groupValues?.get(1)
+        val trailer         = Regex("""embedUrl": "(.*)"""").find(document.html())?.groupValues?.get(1)
         val actors          = document.select("div.film-info ul li:nth-child(2) a > span").map {
             Actor(it.text())
         }
@@ -175,10 +173,10 @@ class FullHDFilmizlesene : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("FHD", "data » ${data}")
+        Log.d("FHD", "data » $data")
         val document    = app.get(data).document
         val videoLinks = getVideoLinks(document)
-        Log.d("FHD", "videoLinks » ${videoLinks}")
+        Log.d("FHD", "videoLinks » $videoLinks")
         if (videoLinks.isEmpty()) return false
 
 

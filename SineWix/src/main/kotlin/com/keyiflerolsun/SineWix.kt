@@ -13,8 +13,6 @@ class SineWix : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "tr"
     override val hasQuickSearch       = false
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Movie, TvType.TvSeries, TvType.Anime)
 
     override val mainPage = mainPageOf(
@@ -42,27 +40,27 @@ class SineWix : MainAPI() {
         "${mainUrl}/sinewix/movies/36"     to "Tarih",
     )
 
-    val twitter = "https://twitter.com/"
+    private val twitter = "https://twitter.com/"
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
         val url  = "${request.data}/${page}"
         val home = when {
             request.data.contains("/movies") -> {
-                app.get(url).parsedSafe<GenresMovie>()?.data?.mapNotNull { item ->
-                    newMovieSearchResponse(item.title, "?type=${item.type}&id=${item.id}", TvType.Movie) { this.posterUrl = item.poster_path }
-                } ?: listOf<SearchResponse>()
+                app.get(url).parsedSafe<GenresMovie>()?.data?.map { item ->
+                    newMovieSearchResponse(item.title, "?type=${item.type}&id=${item.id}", TvType.Movie) { this.posterUrl = item.posterPath }
+                } ?: listOf()
             }
             request.data.contains("/series") -> {
-                app.get(url).parsedSafe<GenresSerie>()?.data?.mapNotNull { item ->
-                    newTvSeriesSearchResponse(item.name, "?type=${item.type}&id=${item.id}", TvType.TvSeries) { this.posterUrl = item.poster_path }
-                } ?: listOf<SearchResponse>()
+                app.get(url).parsedSafe<GenresSerie>()?.data?.map { item ->
+                    newTvSeriesSearchResponse(item.name, "?type=${item.type}&id=${item.id}", TvType.TvSeries) { this.posterUrl = item.posterPath }
+                } ?: listOf()
             }
             request.data.contains("/animes") -> {
-                app.get(url).parsedSafe<GenresSerie>()?.data?.mapNotNull { item ->
-                    newAnimeSearchResponse(item.name, "?type=${item.type}&id=${item.id}", TvType.Anime) { this.posterUrl = item.poster_path }
-                } ?: listOf<SearchResponse>()
+                app.get(url).parsedSafe<GenresSerie>()?.data?.map { item ->
+                    newAnimeSearchResponse(item.name, "?type=${item.type}&id=${item.id}", TvType.Anime) { this.posterUrl = item.posterPath }
+                } ?: listOf()
             }
-            else -> listOf<SearchResponse>()
+            else -> listOf()
         }
 
         return newHomePageResponse(request.name, home)
@@ -74,12 +72,12 @@ class SineWix : MainAPI() {
 
         return reqData?.mapNotNull { item ->
             when (item.type) {
-                "movie" -> newMovieSearchResponse(item.name,    "?type=${item.type}&id=${item.id}", TvType.Movie)    { this.posterUrl = item.poster_path }
-                "serie" -> newTvSeriesSearchResponse(item.name, "?type=${item.type}&id=${item.id}", TvType.TvSeries) { this.posterUrl = item.poster_path }
-                "anime" -> newAnimeSearchResponse(item.name,    "?type=${item.type}&id=${item.id}", TvType.Anime)    { this.posterUrl = item.poster_path }
+                "movie" -> newMovieSearchResponse(item.name,    "?type=${item.type}&id=${item.id}", TvType.Movie)    { this.posterUrl = item.posterPath }
+                "serie" -> newTvSeriesSearchResponse(item.name, "?type=${item.type}&id=${item.id}", TvType.TvSeries) { this.posterUrl = item.posterPath }
+                "anime" -> newAnimeSearchResponse(item.name,    "?type=${item.type}&id=${item.id}", TvType.Anime)    { this.posterUrl = item.posterPath }
                 else -> null
             }
-        } ?: mutableListOf<SearchResponse>()
+        } ?: mutableListOf()
     }
 
     override suspend fun quickSearch(query: String): List<SearchResponse> = search(query)
@@ -93,16 +91,16 @@ class SineWix : MainAPI() {
             val media   = request.parsedSafe<MovieDetail>() ?: return null
 
             val orgTitle        = media.title
-            val altTitle        = media.original_name ?: ""
-            val title           = if (altTitle.isNotEmpty() && orgTitle != altTitle) "${orgTitle} - ${altTitle}" else orgTitle
+            val altTitle        = media.originalName ?: ""
+            val title           = if (altTitle.isNotEmpty() && orgTitle != altTitle) "$orgTitle - $altTitle" else orgTitle
 
-            val poster          = fixUrlNull(media.poster_path)
+            val poster          = fixUrlNull(media.posterPath)
             val description     = media.overview
-            val year            = media.release_date.split("-").first().toIntOrNull()
-            val tags            = media?.genres?.map { it.name }
-            val rating          = "${media.vote_average}".toRatingInt()
-            val recommendations = media?.relateds?.mapNotNull { newMovieSearchResponse(it.title, "?type=${it.type}&id=${it.id}", TvType.Movie) { this.posterUrl = it.poster_path } }
-            val actors          = media?.casterslist?.map { Actor(it.name, it?.profile_path) }
+            val year            = media.releaseDate.split("-").first().toIntOrNull()
+            val tags            = media.genres?.map { it.name }
+            val rating          = "${media.voteAverage}".toRatingInt()
+            val recommendations = media.relateds?.map { newMovieSearchResponse(it.title, "?type=${it.type}&id=${it.id}", TvType.Movie) { this.posterUrl = it.posterPath } }
+            val actors          = media.casterslist?.map { Actor(it.name, it.profilePath) }
 
             return newMovieLoadResponse(title, url, TvType.Movie, url) {
                 this.posterUrl       = poster
@@ -118,29 +116,28 @@ class SineWix : MainAPI() {
             val media   = request.parsedSafe<SerieDetail>() ?: return null
 
             val orgTitle        = media.name
-            val altTitle        = media.original_name ?: ""
-            val title           = if (altTitle.isNotEmpty() && orgTitle != altTitle) "${orgTitle} - ${altTitle}" else orgTitle
+            val altTitle        = media.originalName ?: ""
+            val title           = if (altTitle.isNotEmpty() && orgTitle != altTitle) "$orgTitle - $altTitle" else orgTitle
 
-            val poster          = fixUrlNull(media.poster_path)
+            val poster          = fixUrlNull(media.posterPath)
             val description     = media.overview
-            val year            = media.first_air_date.split("-").first().toIntOrNull()
-            val tags            = media?.genres?.map { it.name }
-            val rating          = "${media.vote_average}".toRatingInt()
-            val recommendations = media?.relateds?.mapNotNull { newMovieSearchResponse(it.name, "?type=${it.type}&id=${it.id}", TvType.Movie) { this.posterUrl = it.poster_path } }
-            val actors          = media?.casterslist?.map { Actor(it.name, it?.profile_path) }
+            val year            = media.firstAirDate.split("-").first().toIntOrNull()
+            val tags            = media.genres?.map { it.name }
+            val rating          = "${media.voteAverage}".toRatingInt()
+            val recommendations = media.relateds?.map { newMovieSearchResponse(it.name, "?type=${it.type}&id=${it.id}", TvType.Movie) { this.posterUrl = it.posterPath } }
+            val actors          = media.casterslist?.map { Actor(it.name, it.profilePath) }
 
             val episodeList     = mutableListOf<Episode>()
 
             media.seasons.forEach { season ->
                 season.episodes.forEach { episode ->
-                    episodeList.add(Episode(
-                        data        = url + "&source=" + episode.videos.firstOrNull()?.link ?: "",
-                        name        = episode.name,
-                        season      = season.season_number,
-                        episode     = episode.episode_number,
-                        description = episode.overview,
-                        posterUrl   = episode.still_path
-                    ))
+                    episodeList.add(newEpisode(url + "&source=" + episode.videos.firstOrNull()?.link) {
+                        this.name = episode.name
+                        this.season = season.seasonNumber
+                        this.episode = episode.episodeNumber
+                        this.description = episode.overview
+                        this.posterUrl = episode.stillPath
+                    })
                 }
             }
 
@@ -154,8 +151,6 @@ class SineWix : MainAPI() {
                 addActors(actors)
             }
         }
-
-        return null
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
@@ -165,7 +160,7 @@ class SineWix : MainAPI() {
             val media   = request.parsedSafe<MovieDetail>() ?: return false
 
             media.videos.forEach { video ->
-                Log.d("SNWX", "video » ${video}")
+                Log.d("SNWX", "video » $video")
 
                 if (video.link.contains("mediafire.com")) {
                     loadExtractor(video.link, twitter, subtitleCallback, callback)

@@ -2,7 +2,6 @@ package com.keyiflerolsun
 
 import android.util.Log
 import com.lagradost.cloudstream3.USER_AGENT
-import com.lagradost.cloudstream3.utils.*
 import com.fasterxml.jackson.core.json.JsonReadFeature
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -10,7 +9,6 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.lagradost.nicehttp.Requests
 import com.lagradost.nicehttp.NiceResponse
 import com.lagradost.nicehttp.ResponseParser
-import com.lagradost.cloudstream3.APIHolder.unixTime
 import kotlin.reflect.KClass
 import okhttp3.FormBody
 import kotlinx.coroutines.delay
@@ -45,15 +43,6 @@ val httpClient = Requests(responseParser = jsonParser).apply {
 
 inline fun <reified T : Any> parseJson(text: String): T {
     return jsonParser.parse(text, T::class)
-}
-
-inline fun <reified T : Any> tryParseJson(text: String): T? {
-    return try {
-        jsonParser.parseSafe(text, T::class)
-    } catch (exception: Exception) {
-        exception.printStackTrace()
-        null
-    }
 }
 
 fun convertRuntimeToMinutes(runtimeText: String): Int {

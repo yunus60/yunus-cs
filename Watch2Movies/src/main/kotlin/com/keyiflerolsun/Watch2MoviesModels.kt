@@ -5,6 +5,7 @@ package com.keyiflerolsun
 import com.fasterxml.jackson.annotation.JsonProperty
 
 
+@Suppress("unused")
 data class Sources(
     @JsonProperty("type") val type: String,
     @JsonProperty("link") val link: String,

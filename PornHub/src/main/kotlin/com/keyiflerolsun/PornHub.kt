@@ -14,8 +14,6 @@ class PornHub : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "en"
     override val hasQuickSearch       = false
-    override val hasDownloadSupport   = true
-    override val hasChromecastSupport = true
     override val supportedTypes       = setOf(TvType.NSFW)
     override val vpnStatus            = VPNStatus.MightBeNeeded
 
@@ -64,10 +62,9 @@ class PornHub : MainAPI() {
         val document = app.get(url).document
 
         val title           = document.selectFirst("h1.title span[class='inlineFree']")?.text()?.trim() ?: return null
-        val description     = title
         val poster          = fixUrlNull(document.selectFirst("div.mainPlayerDiv img")?.attr("src"))
-        val year            = Regex("""uploadDate\": \"(\d+)""").find(document.html())?.groupValues?.get(1)?.toIntOrNull()
-        val tags            = document.select("div.categoriesWrapper a[data-label='Category']").map { it?.text()?.trim().toString().replace(", ","") }
+        val year            = Regex("""uploadDate": "(\d+)""").find(document.html())?.groupValues?.get(1)?.toIntOrNull()
+        val tags            = document.select("div.categoriesWrapper a[data-label='Category']").map { it.text().trim().replace(", ","") }
         val rating          = document.selectFirst("span.percent")?.text()?.first()?.toString()?.toRatingInt()
         val duration        = Regex("duration' : '(.*)',").find(document.html())?.groupValues?.get(1)?.toIntOrNull()
         val actors          = document.select("div.pornstarsWrapper a[data-label='Pornstar']").mapNotNull {
@@ -75,7 +72,7 @@ class PornHub : MainAPI() {
         }
 
         val recommendations = document.selectXpath("//a[contains(@class, 'img')]").mapNotNull {
-            val recName      = it?.attr("title")?.trim() ?: return@mapNotNull null
+            val recName      = it.attr("title").trim()
             val recHref      = fixUrlNull(it.attr("href")) ?: return@mapNotNull null
             val recPosterUrl = fixUrlNull(it.selectFirst("img")?.attr("src"))
             newMovieSearchResponse(recName, recHref, TvType.NSFW) {
@@ -84,24 +81,24 @@ class PornHub : MainAPI() {
         }
 
         return newMovieLoadResponse(title, url, TvType.NSFW, url) {
-            this.posterUrl       = poster
-            this.year            = year
-            this.plot            = description
-            this.tags            = tags
-            this.rating          = rating
-            this.duration        = duration
+            this.posterUrl = poster
+            this.year = year
+            this.plot = title
+            this.tags = tags
+            this.rating = rating
+            this.duration = duration
             this.recommendations = recommendations
             addActors(actors)
         }
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("PHub", "url » ${data}")
+        Log.d("PHub", "url » $data")
         val source         = app.get(data).text
-        val extractedValue = Regex("""([^\"]*master.m3u8?.[^\"]*)""").find(source)?.groups?.last()?.value ?: return false
+        val extractedValue = Regex("""([^"]*master.m3u8?.[^"]*)""").find(source)?.groups?.last()?.value ?: return false
         val m3uLink        = extractedValue.replace("\\", "")
-        Log.d("PHub", "extractedValue » ${extractedValue}")
-        Log.d("PHub", "m3uLink » ${m3uLink}")
+        Log.d("PHub", "extractedValue » $extractedValue")
+        Log.d("PHub", "m3uLink » $m3uLink")
 
         callback.invoke(
             ExtractorLink(

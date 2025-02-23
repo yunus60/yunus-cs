@@ -14,7 +14,7 @@ data class SearchData(
 )
 
 data class SearchItem(
-    @JsonProperty("s_link")  val s_link: String,
-    @JsonProperty("s_name")  val s_name: String,
-    @JsonProperty("s_image") val s_image: String,
+    @JsonProperty("s_link")  val sLink: String,
+    @JsonProperty("s_name")  val sName: String,
+    @JsonProperty("s_image") val sImage: String,
 )

@@ -2,28 +2,31 @@
 
 package com.keyiflerolsun
 
-import android.util.Log
-import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.utils.*
-import com.lagradost.cloudstream3.extractors.helper.AesHelper
-import java.net.URLEncoder
-import java.net.URLDecoder
 import android.util.Base64
+import android.util.Log
+import com.lagradost.cloudstream3.ErrorLoadingException
+import com.lagradost.cloudstream3.SubtitleFile
+import com.lagradost.cloudstream3.app
+import com.lagradost.cloudstream3.utils.ExtractorApi
+import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.Qualities
+import com.lagradost.cloudstream3.utils.StringUtils.decodeUri
+import com.lagradost.cloudstream3.utils.StringUtils.encodeUri
 
 class OxAxPlayer : ExtractorApi() {
     override var name            = "OxAxPlayer"
     override var mainUrl         = "http://oxax.tv"
     override val requiresReferer = true
 
-    suspend fun base64Encode(str: String): String {
-        return Base64.encodeToString(URLEncoder.encode(str, "UTF-8").toByteArray(Charsets.UTF_8), Base64.DEFAULT)
+    private fun base64Encode(str: String): String {
+        return Base64.encodeToString(str.encodeUri().toByteArray(), Base64.DEFAULT)
     }
 
-    suspend fun base64Decode(str: String): String {
-        return URLDecoder.decode(String(Base64.decode(str, Base64.DEFAULT), Charsets.UTF_8), "UTF-8")
+    private fun base64Decode(str: String): String {
+        return String(Base64.decode(str, Base64.DEFAULT), Charsets.UTF_8).decodeUri()
     }
 
-    suspend fun decodeAtob(base64Str: String): String {
+    private fun decodeAtob(base64Str: String): String {
         val b64Keys = mapOf(
             0 to "556G3",
             1 to "556G3D",
@@ -54,15 +57,15 @@ class OxAxPlayer : ExtractorApi() {
         val extRef  = referer ?: ""
         val iSource = app.get(url, referer=extRef).text
 
-        val kodk     = Regex("""var kodk=\"(.*?)\"""").find(iSource)?.groupValues?.get(1) ?: throw ErrorLoadingException("kodk not found")
-        val kos      = Regex("""var kos=\"(.*?)\"""").find(iSource)?.groupValues?.get(1) ?: throw ErrorLoadingException("kos not found")
-        val playerjs = Regex("""new Playerjs\(\"(.*?)\"""").find(iSource)?.groupValues?.get(1) ?: throw ErrorLoadingException("playerjs not found")
+        val kodk     = Regex("""var kodk="(.*?)"""").find(iSource)?.groupValues?.get(1) ?: throw ErrorLoadingException("kodk not found")
+        val kos      = Regex("""var kos="(.*?)"""").find(iSource)?.groupValues?.get(1) ?: throw ErrorLoadingException("kos not found")
+        val playerjs = Regex("""new Playerjs\("(.*?)"""").find(iSource)?.groupValues?.get(1) ?: throw ErrorLoadingException("playerjs not found")
 
         val decodedData = decodeAtob(playerjs)
         val (v1, v2)    = Regex("""\{v1\}(.*?)\{v2\}([a-zA-Z0-9]*)""").find(decodedData)?.destructured ?: throw ErrorLoadingException("v1 and v2 not found in decoded data")
 
         m3uLink = "${kodk}${v1}${kos}${v2}"
-        Log.d("Kekik_${this.name}", "m3uLink » ${m3uLink}")
+        Log.d("Kekik_${this.name}", "m3uLink » $m3uLink")
 
         callback.invoke(
             ExtractorLink(

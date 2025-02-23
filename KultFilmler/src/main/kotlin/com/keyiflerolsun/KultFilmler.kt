@@ -16,8 +16,6 @@ class KultFilmler : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "tr"
     override val hasQuickSearch       = false
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Movie, TvType.TvSeries)
 
     override val mainPage = mainPageOf(
@@ -60,10 +58,10 @@ class KultFilmler : MainAPI() {
         val href      = fixUrlNull(this.selectFirst("div.name a")?.attr("href")) ?: return null
         val posterUrl = fixUrlNull(this.selectFirst("div.img img")?.attr("src"))
 
-        if (href.contains("/dizi/")) {
-            return newTvSeriesSearchResponse(title, href, TvType.TvSeries) { this.posterUrl = posterUrl }
+        return if (href.contains("/dizi/")) {
+            newTvSeriesSearchResponse(title, href, TvType.TvSeries) { this.posterUrl = posterUrl }
         } else {
-            return newMovieSearchResponse(title, href, TvType.Movie) { this.posterUrl = posterUrl }
+            newMovieSearchResponse(title, href, TvType.Movie) { this.posterUrl = posterUrl }
         }
     }
 
@@ -97,16 +95,15 @@ class KultFilmler : MainAPI() {
                 val epHref    = fixUrlNull(it.selectFirst("div.name a")?.attr("href")) ?: return@mapNotNull null
                 val ssnDetail = it.selectFirst("span.episodetitle")?.ownText()?.trim() ?: return@mapNotNull null
                 val epDetail  = it.selectFirst("span.episodetitle b")?.ownText()?.trim() ?: return@mapNotNull null
-                val epName    = "${ssnDetail} - ${epDetail}"
-                val epSeason  = ssnDetail.substringBefore(". ")?.toIntOrNull()
-                val epEpisode = epDetail.substringBefore(". ")?.toIntOrNull()
+                val epName    = "$ssnDetail - $epDetail"
+                val epSeason  = ssnDetail.substringBefore(". ").toIntOrNull()
+                val epEpisode = epDetail.substringBefore(". ").toIntOrNull()
 
-                Episode(
-                    data    = epHref,
-                    name    = epName,
-                    season  = epSeason,
-                    episode = epEpisode
-                )
+                newEpisode(epHref) {
+                    this.name    = epName
+                    this.season  = epSeason
+                    this.episode = epEpisode
+                }
             }
 
             return newTvSeriesLoadResponse(title, url, TvType.TvSeries, episodes) {
@@ -138,7 +135,7 @@ class KultFilmler : MainAPI() {
 
         // return Jsoup.parse(String(Base64.decode(atobKey))).selectFirst("iframe")?.attr("src") ?: ""
 
-        val atob = Regex("""PHA\+[0-9a-zA-Z+\/=]*""").find(sourceCode)?.value ?: return ""
+        val atob = Regex("""PHA\+[0-9a-zA-Z+/=]*""").find(sourceCode)?.value ?: return ""
 
         val padding    = 4 - atob.length % 4
         val atobPadded = if (padding < 4) atob.padEnd(atob.length + padding, '=') else atob
@@ -149,37 +146,33 @@ class KultFilmler : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("KLT", "data » ${data}")
+        Log.d("KLT", "data » $data")
         val document = app.get(data).document
         val iframes  = mutableSetOf<String>()
 
         val mainFrame = getIframe(document.html())
-        if (mainFrame != null) {
-            iframes.add(mainFrame)
-        }
+        iframes.add(mainFrame)
 
         document.select("div.parts-middle").forEach {
             val alternatif = it.selectFirst("a")?.attr("href")
             if (alternatif != null) {
                 val alternatifDocument = app.get(alternatif).document
                 val alternatifFrame    = getIframe(alternatifDocument.html())
-                if (alternatifFrame != null) {
-                    iframes.add(alternatifFrame)
-                }
+                iframes.add(alternatifFrame)
             }
         }
 
         for (iframe in iframes) {
-            Log.d("KLT", "iframe » ${iframe}")
+            Log.d("KLT", "iframe » $iframe")
             if (iframe.contains("vidmoly")) {
                 val headers  = mapOf(
                     "User-Agent"     to "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36",
                     "Sec-Fetch-Dest" to "iframe"
                 )
                 val iSource = app.get(iframe, headers=headers, referer="${mainUrl}/").text
-                var m3uLink = Regex("""file:\"([^\"]+)""").find(iSource)?.groupValues?.get(1) ?: throw ErrorLoadingException("m3u link not found")
+                val m3uLink = Regex("""file:"([^"]+)""").find(iSource)?.groupValues?.get(1) ?: throw ErrorLoadingException("m3u link not found")
 
-                Log.d("Kekik_VidMoly", "m3uLink » ${m3uLink}")
+                Log.d("Kekik_VidMoly", "m3uLink » $m3uLink")
 
                 callback.invoke(
                     ExtractorLink(

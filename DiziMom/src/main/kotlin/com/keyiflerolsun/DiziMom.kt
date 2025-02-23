@@ -14,8 +14,6 @@ class DiziMom : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "tr"
     override val hasQuickSearch       = false
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.TvSeries)
 
     override val mainPage = mainPageOf(
@@ -76,7 +74,7 @@ class DiziMom : MainAPI() {
         val poster      = fixUrlNull(document.selectFirst("div.category_image img")?.attr("src")) ?: return null
         val year        = document.selectXpath("//div[span[contains(text(), 'Yapım Yılı')]]").text().substringAfter("Yapım Yılı : ").trim().toIntOrNull()
         val description = document.selectFirst("div.category_desc")?.text()?.trim()
-        val tags        = document.select("div.genres a").mapNotNull { it?.text()?.trim() }
+        val tags        = document.select("div.genres a").mapNotNull { it.text().trim() }
         val rating      = document.selectXpath("//div[span[contains(text(), 'IMDB')]]").text().substringAfter("IMDB : ").trim().toRatingInt()
         val actors      = document.selectXpath("//div[span[contains(text(), 'Oyuncular')]]").text().substringAfter("Oyuncular : ").split(", ").map {
             Actor(it.trim())
@@ -88,12 +86,11 @@ class DiziMom : MainAPI() {
             val epEpisode = Regex("""(\d+)\.Bölüm""").find(epName)?.groupValues?.get(1)?.toIntOrNull()
             val epSeason  = Regex("""(\d+)\.Sezon""").find(epName)?.groupValues?.get(1)?.toIntOrNull() ?: 1
 
-            Episode(
-                data    = epHref,
-                name    = epName.substringBefore(" izle").replace(title, "").trim(),
-                season  = epSeason,
-                episode = epEpisode
-            )
+            newEpisode(epHref) {
+                this.name    = epName.substringBefore(" izle").replace(title, "").trim()
+                this.season  = epSeason
+                this.episode = epEpisode
+            }
         }
 
         return newTvSeriesLoadResponse(title, url, TvType.TvSeries, episodes) {
@@ -107,7 +104,7 @@ class DiziMom : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("DZM", "data » ${data}")
+        Log.d("DZM", "data » $data")
 
         val ua = mapOf("User-Agent" to "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36")
 
@@ -119,7 +116,7 @@ class DiziMom : MainAPI() {
                 "log"         to "keyiflerolsun",
                 "pwd"         to "12345",
                 "rememberme"  to "forever",
-                "redirect_to" to "${mainUrl}",
+                "redirect_to" to mainUrl,
             )
         )
 
@@ -137,7 +134,7 @@ class DiziMom : MainAPI() {
         }
 
         for (iframe in iframes) {
-            Log.d("DZM", "iframe » ${iframe}")
+            Log.d("DZM", "iframe » $iframe")
             loadExtractor(iframe, "${mainUrl}/", subtitleCallback, callback)
         }
 

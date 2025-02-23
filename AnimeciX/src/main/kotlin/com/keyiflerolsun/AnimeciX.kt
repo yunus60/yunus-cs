@@ -14,8 +14,6 @@ class AnimeciX : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "tr"
     override val hasQuickSearch       = false
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Anime)
 
     override var sequentialMainPage = true        // * https://recloudstream.github.io/dokka/-cloudstream/com.lagradost.cloudstream3/-main-a-p-i/index.html#-2049735995%2FProperties%2F101969414
@@ -35,7 +33,7 @@ class AnimeciX : MainAPI() {
             )
         ).parsedSafe<Category>()
 
-        val home     = response?.pagination?.data?.mapNotNull { anime ->
+        val home     = response?.pagination?.data?.map { anime ->
             newAnimeSearchResponse(
                 anime.title,
                 "${mainUrl}/secure/titles/${anime.id}?titleId=${anime.id}",
@@ -49,9 +47,9 @@ class AnimeciX : MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-        val response = app.get("${mainUrl}/secure/search/${query}?limit=20").parsedSafe<Search>() ?: return listOf<SearchResponse>()
+        val response = app.get("${mainUrl}/secure/search/${query}?limit=20").parsedSafe<Search>() ?: return listOf()
 
-        return response.results.mapNotNull { anime ->
+        return response.results.map { anime ->
             newAnimeSearchResponse(
                 anime.title,
                 "${mainUrl}/secure/titles/${anime.id}?titleId=${anime.id}",
@@ -71,30 +69,27 @@ class AnimeciX : MainAPI() {
                 "x-e-h" to "7Y2ozlO+QysR5w9Q6Tupmtvl9jJp7ThFH8SB+Lo7NvZjgjqRSqOgcT2v4ISM9sP10LmnlYI8WQ==.xrlyOBFS5BHjQ2Lk"
             )
         ).parsedSafe<Title>() ?: return null
-
         val episodes = mutableListOf<Episode>()
         val titleId  = url.substringAfter("?titleId=")
 
-        if (response.title.title_type == "anime") {
+        if (response.title.titleType == "anime") {
             for (sezon in response.title.seasons) {
                 val sezonResponse = app.get("${mainUrl}/secure/related-videos?episode=1&season=${sezon.number}&videoId=0&titleId=${titleId}").parsedSafe<TitleVideos>() ?: return null
                 for (video in sezonResponse.videos) {
-                    episodes.add(Episode(
-                        data    = video.url,
-                        name    = "${video.season_num}. Sezon ${video.episode_num}. Bölüm",
-                        season  = video.season_num,
-                        episode = video.episode_num
-                    ))
+                    episodes.add(newEpisode(video.url) {
+                        this.name = "${video.seasonNum}. Sezon ${video.episodeNum}. Bölüm"
+                        this.season = video.seasonNum
+                        this.episode = video.episodeNum
+                    })
                 }
             }
         } else {
-            if (response.title.videos.isNotEmpty() == true) {
-                episodes.add(Episode(
-                    data    = response.title.videos.first().url,
-                    name    = "Filmi İzle",
-                    season  = 1,
-                    episode = 1
-                ))
+            if (response.title.videos.isNotEmpty()) {
+                episodes.add(newEpisode(response.title.videos.first().url) {
+                    this.name    = "Filmi İzle"
+                    this.season  = 1
+                    this.episode = 1
+                })
             }
         }
 
@@ -108,17 +103,17 @@ class AnimeciX : MainAPI() {
             this.posterUrl = fixUrlNull(response.title.poster)
             this.year      = response.title.year
             this.plot      = response.title.description
-            this.tags      = response.title.tags.filterNotNull().map { it.name }
+            this.tags      = response.title.tags.map { it.name }
             this.rating    = response.title.rating.toRatingInt()
-            addActors(response.title.actors.filterNotNull().map { Actor(it.name, fixUrlNull(it.poster)) })
+            addActors(response.title.actors.map { Actor(it.name, fixUrlNull(it.poster)) })
             addTrailer(response.title.trailer)
         }
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("ACX", "data » ${data}")
-        val iframeLink = app.get("${mainUrl}/${data}", referer="${mainUrl}/").url.toString()
-        Log.d("ACX", "iframeLink » ${iframeLink}")
+        Log.d("ACX", "data » $data")
+        val iframeLink = app.get("${mainUrl}/${data}", referer="${mainUrl}/").url
+        Log.d("ACX", "iframeLink » $iframeLink")
 
         loadExtractor(iframeLink, "${mainUrl}/", subtitleCallback, callback)
 

@@ -16,8 +16,6 @@ class HQPorner : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "en"
     override val hasQuickSearch       = false
-    override val hasDownloadSupport   = true
-    override val hasChromecastSupport = true
     override val supportedTypes       = setOf(TvType.NSFW)
     override val vpnStatus            = VPNStatus.MightBeNeeded
 
@@ -125,7 +123,6 @@ class HQPorner : MainAPI() {
         val lowerCaseTitle  = document.selectFirst("h1.main-h1")?.text() ?: "No Title"
         val title           = lowerCaseTitle.split(" ").joinToString(" ") { it.replaceFirstChar { char -> char.uppercase() } }
         val poster          = loadData.posterUrl
-        val description     = title
         val tags            = document.select("p a[href*='/category']").map { it.text() }
         val duration        = convertTimeToMinutes(document.selectFirst("li.fa-clock-o")?.text()?.trim() ?: "")
         val recommendations = document.select("div.row div.row section").mapNotNull { it.toMainPageResult() }
@@ -136,22 +133,22 @@ class HQPorner : MainAPI() {
         }
 
         return newMovieLoadResponse(title, url, TvType.NSFW, loadData.href) {
-            this.posterUrl       = poster
-            this.plot            = description
-            this.tags            = tags
-            this.duration        = duration
+            this.posterUrl = poster
+            this.plot = title
+            this.tags = tags
+            this.duration = duration
             this.recommendations = recommendations
             addActors(actors)
         }
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("HPRN", "data » ${data}")
+        Log.d("HPRN", "data » $data")
         val document = app.get(data).document
 
         val rawURL = Regex("""url: '/blocks/altplayer\.php\?i=//(.*?)',""").find(document.toString())?.groupValues?.get(1) ?: return false
         val vidURL = "https://${rawURL}"
-        Log.d("HPRN", "vidURL » ${vidURL}")
+        Log.d("HPRN", "vidURL » $vidURL")
 
         loadExtractor(vidURL, "${mainUrl}/", subtitleCallback, callback)
 

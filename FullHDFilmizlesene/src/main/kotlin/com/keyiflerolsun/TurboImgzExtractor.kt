@@ -16,7 +16,7 @@ open class TurboImgz : ExtractorApi() {
         val videoReq = app.get(url.substringAfter("||"), referer=extRef).text
 
         val videoLink = Regex("""file: "(.*)",""").find(videoReq)?.groupValues?.get(1) ?: throw ErrorLoadingException("File not found")
-        Log.d("Kekik_${this.name}", "videoLink » ${videoLink}")
+        Log.d("Kekik_${this.name}", "videoLink » $videoLink")
 
         callback.invoke(
             ExtractorLink(

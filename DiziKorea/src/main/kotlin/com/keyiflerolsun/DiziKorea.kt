@@ -16,8 +16,6 @@ class DiziKorea : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "tr"
     override val hasQuickSearch       = true
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.AsianDrama)
 
     override val mainPage = mainPageOf(
@@ -84,7 +82,7 @@ class DiziKorea : MainAPI() {
         val poster      = fixUrlNull(document.selectFirst("div.series-profile-image img")?.attr("src")) ?: return null
         val year        = document.selectFirst("h1 span")?.text()?.substringAfter("(")?.substringBefore(")")?.toIntOrNull()
         val description = document.selectFirst("div.series-profile-summary p")?.text()?.trim()
-        val tags        = document.select("div.series-profile-type a").mapNotNull { it?.text()?.trim() }
+        val tags        = document.select("div.series-profile-type a").mapNotNull { it.text().trim() }
         val rating      = document.selectFirst("span.color-imdb")?.text()?.trim()?.toRatingInt()
         val duration    = document.selectXpath("//span[text()='Süre']//following-sibling::p").text().trim().split(" ").first().toIntOrNull()
         val trailer     = document.selectFirst("div.series-profile-trailer")?.attr("data-yt")
@@ -101,12 +99,11 @@ class DiziKorea : MainAPI() {
                     val epHref    = fixUrlNull(episodeElement.selectFirst("h6 a")?.attr("href")) ?: return@ep
                     val epEpisode = episodeElement.selectFirst("a.truncate data")?.text()?.trim()?.toIntOrNull()
 
-                    episodes.add(Episode(
-                        data    = epHref,
-                        name    = "${epSeason}. Sezon ${epEpisode}. Bölüm",
-                        season  = epSeason,
-                        episode = epEpisode
-                    ))
+                    episodes.add(newEpisode(epHref) {
+                        this.name = "${epSeason}. Sezon ${epEpisode}. Bölüm"
+                        this.season = epSeason
+                        this.episode = epEpisode
+                    })
                 }
             }
 
@@ -135,13 +132,13 @@ class DiziKorea : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("DZK", "data » ${data}")
+        Log.d("DZK", "data » $data")
         val document = app.get(data).document
 
 
         document.select("div.series-watch-alternatives button").forEach {
-            var iframe = fixUrlNull(it.attr("data-hhs")) ?: return@forEach
-            Log.d("DZK", "iframe » ${iframe}")
+            val iframe = fixUrlNull(it.attr("data-hhs")) ?: return@forEach
+            Log.d("DZK", "iframe » $iframe")
 
             loadExtractor(iframe, "${mainUrl}/", subtitleCallback, callback)
         }

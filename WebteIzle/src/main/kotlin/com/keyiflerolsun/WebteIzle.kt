@@ -3,19 +3,37 @@
 package com.keyiflerolsun
 
 import android.util.Log
-import org.jsoup.nodes.Element
-import com.lagradost.cloudstream3.*
-import com.lagradost.cloudstream3.utils.*
-import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
-import com.lagradost.cloudstream3.LoadResponse.Companion.addActors
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.lagradost.cloudstream3.Actor
+import com.lagradost.cloudstream3.HomePageResponse
+import com.lagradost.cloudstream3.LoadResponse
+import com.lagradost.cloudstream3.LoadResponse.Companion.addActors
+import com.lagradost.cloudstream3.LoadResponse.Companion.addTrailer
+import com.lagradost.cloudstream3.MainAPI
+import com.lagradost.cloudstream3.MainPageRequest
+import com.lagradost.cloudstream3.SearchResponse
+import com.lagradost.cloudstream3.SubtitleFile
+import com.lagradost.cloudstream3.TvType
+import com.lagradost.cloudstream3.app
+import com.lagradost.cloudstream3.fixUrl
+import com.lagradost.cloudstream3.fixUrlNull
+import com.lagradost.cloudstream3.mainPageOf
 import com.lagradost.cloudstream3.network.CloudflareKiller
+import com.lagradost.cloudstream3.newHomePageResponse
+import com.lagradost.cloudstream3.newMovieLoadResponse
+import com.lagradost.cloudstream3.newMovieSearchResponse
+import com.lagradost.cloudstream3.toRatingInt
+import com.lagradost.cloudstream3.utils.AppUtils
+import com.lagradost.cloudstream3.utils.ExtractorLink
+import com.lagradost.cloudstream3.utils.Qualities
+import com.lagradost.cloudstream3.utils.getQualityFromName
+import com.lagradost.cloudstream3.utils.loadExtractor
 import okhttp3.Interceptor
 import okhttp3.Response
 import org.jsoup.Jsoup
-import java.net.URLDecoder
-import android.util.Base64
+import org.jsoup.nodes.Element
+import java.net.URLEncoder
 
 class WebteIzle : MainAPI() {
     override var mainUrl              = "https://webteizle3.com"
@@ -23,8 +41,6 @@ class WebteIzle : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "tr"
     override val hasQuickSearch       = false
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Movie)
 
     // ! CloudFlare bypass
@@ -83,7 +99,7 @@ class WebteIzle : MainAPI() {
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        val url      = if ("SAYFA" in "${request.data}") "${request.data}".replace("SAYFA", "${page}") else "${request.data}$page"
+        val url      = if ("SAYFA" in request.data) request.data.replace("SAYFA", "$page") else "${request.data}$page"
         val document = app.get(url).document
         val home     = document.select("div.golgever").mapNotNull { it.toSearchResult() }
 
@@ -99,7 +115,8 @@ class WebteIzle : MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-        val query    = java.net.URLEncoder.encode(query, "ISO-8859-9")
+        @Suppress("NAME_SHADOWING", "BlockingMethodInNonBlockingContext") val query = URLEncoder.encode(query, "ISO-8859-9")
+
         val document = app.get(
             "${mainUrl}/filtre?a=${query}",
             referer     = "${mainUrl}/",
@@ -139,11 +156,11 @@ class WebteIzle : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("WBTI", "data » ${data}")
+        Log.d("WBTI", "data » $data")
         val document = app.get(data).document
 
         val filmId  = document.selectFirst("button#wip")?.attr("data-id") ?: return false
-        Log.d("WBTI", "filmId » ${filmId}")
+        Log.d("WBTI", "filmId » $filmId")
 
         val dilList = mutableListOf<String>()
         if (document.selectFirst("div.golge a[href*=dublaj]")?.attr("src") != null) {
@@ -197,15 +214,15 @@ class WebteIzle : MainAPI() {
                         }
                     }
                 } else if (iframe.contains(mainUrl)) {
-                    Log.d("WBTI", "iframe » ${iframe}")
+                    Log.d("WBTI", "iframe » $iframe")
                     val iSource = app.get(iframe, referer=data).text
 
-                    val encoded  = Regex("""file\": \"([^\"]+)""").find(iSource)?.groupValues?.get(1) ?: continue
-                    val bytes    = encoded.split("\\x").filter { it.isNotEmpty() }.map { it.toInt(16).toByte() }.toByteArray()
+                    val encoded  = Regex("""file": "([^"]+)""").find(iSource)?.groupValues?.get(1) ?: continue
+                    val bytes    = encoded.split("\\x").filter { str -> str.isNotEmpty() }.map { char -> char.toInt(16).toByte() }.toByteArray()
                     val m3uLink = String(bytes, Charsets.UTF_8)
-                    Log.d("WBTI", "m3uLink » ${m3uLink}")
+                    Log.d("WBTI", "m3uLink » $m3uLink")
 
-                    val trackStr = Regex("""tracks = \[([^\]]+)""").find(iSource)?.groupValues?.get(1)
+                    val trackStr = Regex("""tracks = \[([^]]+)""").find(iSource)?.groupValues?.get(1)
                     if (trackStr != null) {
                         val tracks:List<Track> = jacksonObjectMapper().readValue("[${trackStr}]")
 
@@ -224,8 +241,8 @@ class WebteIzle : MainAPI() {
 
                     callback.invoke(
                         ExtractorLink(
-                            source  = "${dilAd} - ${this.name}",
-                            name    = "${dilAd} - ${this.name}",
+                            source  = "$dilAd - ${this.name}",
+                            name    = "$dilAd - ${this.name}",
                             url     = m3uLink,
                             referer = "${mainUrl}/",
                             quality = getQualityFromName("1440p"),
@@ -235,17 +252,17 @@ class WebteIzle : MainAPI() {
 
                     continue
                 } else if (iframe.contains("playerjs-three.vercel.app") || iframe.contains("cstkcstk.github.io")) {
-                    val decoded = iframe.substringAfter("&v=")?.let {
-                        val hexString = it.replace("\\x", "")
+                    val decoded = iframe.substringAfter("&v=").let { query ->
+                        val hexString = query.replace("\\x", "")
                         val bytes     = hexString.chunked(2).map { chunk -> chunk.toInt(16).toByte() }.toByteArray()
 
                         bytes.toString(Charsets.UTF_8)
-                    } ?: ""
+                    }
 
                     callback.invoke(
                         ExtractorLink(
-                            source  = "${dilAd} - ${this.name}",
-                            name    = "${dilAd} - ${this.name}",
+                            source  = "$dilAd - ${this.name}",
+                            name    = "$dilAd - ${this.name}",
                             url     = fixUrl(decoded),
                             referer = "${mainUrl}/",
                             quality = Qualities.Unknown.value,
@@ -255,12 +272,12 @@ class WebteIzle : MainAPI() {
                 }
 
                 if (iframe != null) {
-                    Log.d("WBTI", "iframe » ${iframe}")
+                    Log.d("WBTI", "iframe » $iframe")
                     loadExtractor(iframe, "${mainUrl}/", subtitleCallback) { link ->
                         callback.invoke(
                             ExtractorLink(
-                                source        = "${dilAd} - ${link.name}",
-                                name          = "${dilAd} - ${link.name}",
+                                source        = "$dilAd - ${link.name}",
+                                name          = "$dilAd - ${link.name}",
                                 url           = link.url,
                                 referer       = link.referer,
                                 quality       = link.quality,

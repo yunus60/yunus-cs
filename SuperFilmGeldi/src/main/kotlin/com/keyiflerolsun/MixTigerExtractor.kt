@@ -16,7 +16,7 @@ open class MixTiger : ExtractorApi() {
         val m3uLink:String?
         val extRef  = referer ?: ""
         val postUrl = "${url}?do=getVideo"
-        Log.d("Kekik_${this.name}", "postUrl » ${postUrl}")
+        Log.d("Kekik_${this.name}", "postUrl » $postUrl")
 
         val response = app.post(
             postUrl,
@@ -33,22 +33,22 @@ open class MixTiger : ExtractorApi() {
         )
 
         val videoResponse = response.parsedSafe<FirePlayer>() ?: throw ErrorLoadingException("peace response is null")
-        Log.d("Kekik_${this.name}", "videoResponse » ${videoResponse}")
+        Log.d("Kekik_${this.name}", "videoResponse » $videoResponse")
 
-        if (videoResponse?.videoSrc != null) {
+        if (videoResponse.videoSrc != null) {
             m3uLink = videoResponse.videoSrc
-            Log.d("Kekik_${this.name}", "m3uLink » ${m3uLink}")
+            Log.d("Kekik_${this.name}", "m3uLink » $m3uLink")
 
             loadExtractor(m3uLink, extRef, subtitleCallback, callback)
         } else {
             val videoSources  = videoResponse.videoSources
-            if (videoSources.isNotEmpty()) {
-                m3uLink = videoSources.lastOrNull()?.file
+            m3uLink = if (videoSources.isNotEmpty()) {
+                videoSources.lastOrNull()?.file
             } else {
-                m3uLink = null
+                null
             }
 
-            Log.d("Kekik_${this.name}", "m3uLink » ${m3uLink}")
+            Log.d("Kekik_${this.name}", "m3uLink » $m3uLink")
 
             callback.invoke(
                 ExtractorLink(

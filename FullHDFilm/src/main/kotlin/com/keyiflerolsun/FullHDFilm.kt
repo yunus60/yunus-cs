@@ -15,8 +15,6 @@ class FullHDFilm : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "tr"
     override val hasQuickSearch       = false
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Movie, TvType.TvSeries)
 
     override val mainPage = mainPageOf(
@@ -85,31 +83,29 @@ class FullHDFilm : MainAPI() {
             val iframeSkici = IframeKodlayici()
 
             val partNumbers  = document.select("li.psec").map { it.attr("id") }
-            val partNames    = document.select("li.psec a").map { it.text()?.trim() }
-            val pdataMatches = Regex("""pdata\[\'(.*?)'\] = \'(.*?)\';""").findAll(document.html())
+            val partNames    = document.select("li.psec a").map { it.text().trim() }
+            val pdataMatches = Regex("""pdata\['(.*?)'] = '(.*?)';""").findAll(document.html())
             val pdataList    = pdataMatches.map { it.destructured }.toList()
 
             partNumbers.forEachIndexed { index, partNumber ->
                 val partName = partNames.getOrNull(index)
                 val pdata    = pdataList.getOrNull(index)
                 
-                val key   = pdata?.component1()
                 val value = pdata?.component2()
 
-                if (partName!!.lowercase().contains("fragman") || partNumber!!.lowercase().contains("fragman")) return@forEachIndexed
+                if (partName!!.lowercase().contains("fragman") || partNumber.lowercase().contains("fragman")) return@forEachIndexed
 
                 val iframeData = iframeSkici.iframeCoz(value!!)
-                val iframeLink = app.get(iframeData, referer="${mainUrl}/").url.toString()
+                val iframeLink = app.get(iframeData, referer="${mainUrl}/").url
 
-                val sz_num = partNumber.takeIf { it.contains("sezon") }?.substringBefore("sezon")?.toIntOrNull() ?: 1
-                val ep_num = partName.substringBefore(".")?.trim()?.toIntOrNull() ?: 1
+                val szNum = partNumber.takeIf { it.contains("sezon") }?.substringBefore("sezon")?.toIntOrNull() ?: 1
+                val epNum = partName.substringBefore(".").trim().toIntOrNull() ?: 1
 
-                episodes.add(Episode(
-                    data    = iframeLink,
-                    name    = "${sz_num}. Sezon ${ep_num}. Bölüm",
-                    season  = sz_num,
-                    episode = ep_num
-                ))
+                episodes.add(newEpisode(iframeLink) {
+                    this.name = "${szNum}. Sezon ${epNum}. Bölüm"
+                    this.season = szNum
+                    this.episode = epNum
+                })
             }
 
 
@@ -138,7 +134,7 @@ class FullHDFilm : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("FHDF", "data » ${data}")
+        Log.d("FHDF", "data » $data")
 
         if (!data.contains(mainUrl)) {
             loadExtractor(data, "${mainUrl}/", subtitleCallback, callback)
@@ -151,8 +147,8 @@ class FullHDFilm : MainAPI() {
         val iframeSkici = IframeKodlayici()
 
         val partNumbers  = document.select("li.psec").map { it.attr("id") }
-        val partNames    = document.select("li.psec a").map { it.text()?.trim() }
-        val pdataMatches = Regex("""pdata\[\'(.*?)'\] = \'(.*?)\';""").findAll(document.html())
+        val partNames    = document.select("li.psec a").map { it.text().trim() }
+        val pdataMatches = Regex("""pdata\['(.*?)'] = '(.*?)';""").findAll(document.html())
         val pdataList    = pdataMatches.map { it.destructured }.toList()
 
         partNumbers.forEachIndexed { index, partNumber ->
@@ -162,22 +158,22 @@ class FullHDFilm : MainAPI() {
             val key   = pdata?.component1()
             val value = pdata?.component2()
 
-            if (partName!!.lowercase().contains("fragman") || partNumber!!.lowercase().contains("fragman")) return@forEachIndexed
+            if (partName!!.lowercase().contains("fragman") || partNumber.lowercase().contains("fragman")) return@forEachIndexed
 
-            Log.d("FHDF", "partNumber » ${partNumber}") // ! fragman0
-            Log.d("FHDF", "partName   » ${partName}")   // ! Fragman
-            Log.d("FHDF", "key        » ${key}")        // ! prt_fragman0
+            Log.d("FHDF", "partNumber » $partNumber") // ! fragman0
+            Log.d("FHDF", "partName   » $partName")   // ! Fragman
+            Log.d("FHDF", "key        » $key")        // ! prt_fragman0
             // Log.d("FHDF", "value      » ${value}")      // ! Şifreli veri
 
             val iframeData = iframeSkici.iframeCoz(value!!)
-            val iframeLink = app.get(iframeData, referer="${mainUrl}/").url.toString()
-            Log.d("FHDF", "iframeLink » ${iframeLink}")
+            val iframeLink = app.get(iframeData, referer="${mainUrl}/").url
+            Log.d("FHDF", "iframeLink » $iframeLink")
 
             loadExtractor(iframeLink, "${mainUrl}/", subtitleCallback) { extractor ->
                 callback.invoke (
                     ExtractorLink (
-                        source  = "${partName} - ${extractor.source}",
-                        name    = "${partName} - ${extractor.name}",
+                        source  = "$partName - ${extractor.source}",
+                        name    = "$partName - ${extractor.name}",
                         url     = extractor.url,
                         referer = extractor.referer,
                         quality = extractor.quality,

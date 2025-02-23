@@ -1,19 +1,17 @@
 // ! https://github.com/recloudstream/extensions/blob/master/InvidiousProvider/src/main/kotlin/recloudstream/InvidiousProvider.kt
 
-package com.recloudstream
+package com.keyiflerolsun
 
 import com.lagradost.cloudstream3.*
 import com.lagradost.cloudstream3.utils.*
 import com.lagradost.cloudstream3.utils.AppUtils.tryParseJson
-import java.net.URLEncoder
+import com.lagradost.cloudstream3.utils.StringUtils.encodeUri
 
 class YouTube : MainAPI() {
     override var mainUrl              = "https://inv.nadeko.net"
     override var name                 = "YouTube"
     override val hasMainPage          = true
     override var lang                 = "tr"
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Others)
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
@@ -98,7 +96,7 @@ class YouTube : MainAPI() {
                 title,
                 "${provider.mainUrl}/watch?v=${videoId}",
                 TvType.Others,
-                "${videoId}"
+                videoId
             ) {
                 plot            = description
                 posterUrl       = "${provider.mainUrl}/vi/${videoId}/hqdefault.jpg"
@@ -131,7 +129,4 @@ class YouTube : MainAPI() {
         return true
     }
 
-    companion object {
-        fun String.encodeUri() = URLEncoder.encode(this, "utf8")
-    }
 }

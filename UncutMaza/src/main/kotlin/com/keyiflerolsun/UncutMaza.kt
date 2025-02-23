@@ -1,6 +1,6 @@
 // ! https://codeberg.org/coxju/cs-ext-coxju/src/branch/master/UncutMaza/src/main/kotlin/com/coxju/UncutMaza.kt
 
-package com.coxju
+package com.keyiflerolsun
 
 import org.jsoup.nodes.Element
 import com.lagradost.cloudstream3.*
@@ -12,8 +12,6 @@ class UncutMaza : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "hi"
     override val hasQuickSearch       = false
-    override val hasDownloadSupport   = true
-    override val hasChromecastSupport = true
     override val supportedTypes       = setOf(TvType.NSFW)
     override val vpnStatus            = VPNStatus.MightBeNeeded
 
@@ -37,7 +35,7 @@ class UncutMaza : MainAPI() {
     }
 
     private fun Element.toSearchResult(): SearchResponse? {
-        val title     = fixTitle(this.select("a").attr("title")) ?: return null
+        val title     = fixTitle(this.select("a").attr("title"))
         val href      = fixUrlNull(this.select("a").attr("href")) ?: return null
         val posterUrl = fixUrlNull(this.select("a > div.post-thumbnail>div.post-thumbnail-container>img").attr("data-src"))
 

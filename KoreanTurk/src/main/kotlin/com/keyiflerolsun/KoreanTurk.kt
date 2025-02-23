@@ -14,8 +14,6 @@ class KoreanTurk : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "tr"
     override val hasQuickSearch       = false
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.AsianDrama)
 
     override val mainPage = mainPageOf(
@@ -43,8 +41,8 @@ class KoreanTurk : MainAPI() {
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        if ("${request.data}".contains("Konu-")) {
-            val document = app.get("${request.data}").document
+        if (request.data.contains("Konu-")) {
+            val document = app.get(request.data).document
             val home     = document.selectXpath("//img[contains(@onload, 'NcodeImageResizer')]")
                 .shuffled(Random(System.nanoTime()))
                 .take(12)
@@ -74,7 +72,7 @@ class KoreanTurk : MainAPI() {
     private fun Element.toSearchResult(): SearchResponse? {
         val dizi      = this.selectFirst("h2 span")?.text()?.trim() ?: return null
         val bolum     = this.selectFirst("h2")?.ownText()?.substringBefore(".Bölüm")?.trim()
-        val title     = "${dizi} | ${bolum}"
+        val title     = "$dizi | $bolum"
 
         var href      = fixUrlNull(this.selectFirst("a")?.attr("href")) ?: return null
         if (href.contains("izle.html")) {
@@ -87,8 +85,8 @@ class KoreanTurk : MainAPI() {
     }
 
     private fun Element.toKonuResult(): SearchResponse? {
-        val title     = this.selectXpath("preceding-sibling::a[1]")?.text()?.trim() ?: return null
-        var href      = fixUrlNull(this.selectXpath("preceding-sibling::a[1]")?.attr("href")) ?: return null
+        val title     = this.selectXpath("preceding-sibling::a[1]").text().trim()
+        val href      = fixUrlNull(this.selectXpath("preceding-sibling::a[1]").attr("href")) ?: return null
         val posterUrl = fixUrlNull(this.attr("src"))
 
         return newTvSeriesSearchResponse(title, href, TvType.AsianDrama) { this.posterUrl = posterUrl }
@@ -131,12 +129,11 @@ class KoreanTurk : MainAPI() {
             val epEpisode = Regex("""(\d+)\.Bölüm""").find(epName)?.groupValues?.get(1)?.toIntOrNull()
             val epSeason  = Regex("""(\d+)\.Sezon""").find(epName)?.groupValues?.get(1)?.toIntOrNull() ?: 1
 
-            Episode(
-                data    = epHref,
-                name    = epName,
-                season  = epSeason,
-                episode = epEpisode
-            )
+            newEpisode(epHref) {
+                this.name    = epName
+                this.season  = epSeason
+                this.episode = epEpisode
+            }
         }
 
 
@@ -147,7 +144,7 @@ class KoreanTurk : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("KRT", "data » ${data}")
+        Log.d("KRT", "data » $data")
         val document = app.get(data).document
 
         val iframes = mutableListOf<String>()
@@ -163,7 +160,7 @@ class KoreanTurk : MainAPI() {
         }
 
         iframes.forEach { iframe ->
-            Log.d("KRT", "iframe » ${iframe}")
+            Log.d("KRT", "iframe » $iframe")
             loadExtractor(iframe, "${mainUrl}/", subtitleCallback, callback)
         }
 

@@ -15,8 +15,6 @@ class FilmMakinesi : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "tr"
     override val hasQuickSearch       = false
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Movie)
 
     // ! CloudFlare bypass
@@ -50,7 +48,7 @@ class FilmMakinesi : MainAPI() {
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
         val document = app.get("${request.data}${page}").document
-        val home     = if ("${request.data}".contains("/film-izle/")) {
+        val home     = if (request.data.contains("/film-izle/")) {
             document.select("section#film_posts article").mapNotNull { it.toSearchResult() }
         } else {
             document.select("section#film_posts div.tooltip").mapNotNull { it.toSearchResult() }
@@ -123,11 +121,11 @@ class FilmMakinesi : MainAPI() {
 
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("FLMM", "data » ${data}")
+        Log.d("FLMM", "data » $data")
         val document      = app.get(data).document
         val iframeElement = document.selectFirst("div.player-div iframe")
         val iframe        = iframeElement?.attr("src") ?: iframeElement?.attr("data-src") ?: return false
-        Log.d("FLMM", "iframe » ${iframe}")
+        Log.d("FLMM", "iframe » $iframe")
 
         loadExtractor(iframe, "${mainUrl}/", subtitleCallback, callback)
 

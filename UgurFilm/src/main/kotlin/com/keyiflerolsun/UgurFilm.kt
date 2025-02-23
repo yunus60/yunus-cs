@@ -14,8 +14,6 @@ class UgurFilm : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "tr"
     override val hasQuickSearch       = false
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Movie)
 
     override val mainPage = mainPageOf(
@@ -63,7 +61,7 @@ class UgurFilm : MainAPI() {
         val description = document.selectFirst("div.slayt-aciklama")?.text()?.trim()
         val tags        = document.select("p.tur a[href*='/category/']").map { it.text() }
         val rating      = document.selectFirst("span.puan")?.text()?.split(" ")?.last()?.toRatingInt()
-        val duration    = document.selectXpath("//span[contains(text(), 'Süre:')]//following-sibling::b").text().split(" ").get(0).trim().toIntOrNull()
+        val duration    = document.selectXpath("//span[contains(text(), 'Süre:')]//following-sibling::b").text().split(" ")[0].trim().toIntOrNull()
         val actors      = document.select("li.oyuncu-k").map {
             Actor(it.selectFirst("span")!!.text(), it.selectFirst("img")?.attr("src"))
         }
@@ -80,40 +78,40 @@ class UgurFilm : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("UGF", "data » ${data}")
+        Log.d("UGF", "data » $data")
         val mainDocument = app.get(data).document
 
         mainDocument.select("li.parttab a").forEach {
             val subUrl  = fixUrlNull(it.attr("href")) ?: return false
             val document = app.get(subUrl).document
 
-            var iframe   = fixUrlNull(document.selectFirst("div#vast iframe")?.attr("src")) ?: return@forEach
-            Log.d("UGF", "iframe » ${iframe}")
+            val iframe   = fixUrlNull(document.selectFirst("div#vast iframe")?.attr("src")) ?: return@forEach
+            Log.d("UGF", "iframe » $iframe")
 
-            if (iframe.contains("${mainUrl}")) {
-                val kaynaklar = app.get(iframe, referer=data).document.select("li.c-dropdown__item").associate {
-                    it.attr("data-dropdown-value") to it.attr("data-order-value")
+            if (iframe.contains(mainUrl)) {
+                val kaynaklar = app.get(iframe, referer=data).document.select("li.c-dropdown__item").associate { kaynak ->
+                    kaynak.attr("data-dropdown-value") to kaynak.attr("data-order-value")
                 }
-                Log.d("UGF", "kaynaklar » ${kaynaklar}")
+                Log.d("UGF", "kaynaklar » $kaynaklar")
 
                 val vidId    = iframe.substringAfter("/play.php?vid=").trim()
-                Log.d("UGF", "vidId » ${vidId}")
+                Log.d("UGF", "vidId » $vidId")
 
                 val yuklenenler = mutableListOf<String>()
 
                 for ((kaynak, order) in kaynaklar) {
-                    Log.d("UGF", "kaynak » ${kaynak} | order » ${order}")
+                    Log.d("UGF", "kaynak » $kaynak | order » $order")
 
                     val playerApi = app.post(
                         "${mainUrl}/player/ajax_sources.php",
                         data = mapOf(
                             "vid"         to vidId,
-                            "alternative" to "${kaynak}",
-                            "ord"         to "${order}"
+                            "alternative" to kaynak,
+                            "ord"         to order
                         )
                     ).text
                     val playerData = AppUtils.tryParseJson<AjaxSource>(playerApi) ?: continue
-                    Log.d("UGF", "playerData » ${playerData}")
+                    Log.d("UGF", "playerData » $playerData")
 
                     if (playerData.iframe in yuklenenler) continue
 

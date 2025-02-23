@@ -15,8 +15,6 @@ class SinemaCX : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "tr"
     override val hasQuickSearch       = false
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Movie)
 
     // ! CloudFlare bypass
@@ -89,17 +87,17 @@ class SinemaCX : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("SCX", "data » ${data}")
+        Log.d("SCX", "data » $data")
         val document = app.get(data).document
-        var iframe   = fixUrlNull(document.selectFirst("iframe")?.attr("data-vsrc"))?.substringBefore("?img=") ?: return false
-        Log.d("SCX", "iframe » ${iframe}")
+        val iframe   = fixUrlNull(document.selectFirst("iframe")?.attr("data-vsrc"))?.substringBefore("?img=") ?: return false
+        Log.d("SCX", "iframe » $iframe")
 
         val iframeSource         = app.get(iframe, referer="${mainUrl}/").text
-        val subtitleSectionRegex = Regex("""playerjsSubtitle\s*=\s*\"(.+?)\"""")
+        val subtitleSectionRegex = Regex("""playerjsSubtitle\s*=\s*"(.+?)"""")
         val subtitleSectionMatch = subtitleSectionRegex.find(iframeSource)
         if (subtitleSectionMatch != null) {
             val subtitleSection = subtitleSectionMatch.groupValues[1]
-            val subtitleRegex   = Regex("""\[(.*?)\](https?://[^\s",]+)""")
+            val subtitleRegex   = Regex("""\[(.*?)](https?://[^\s",]+)""")
             val subtitleMatches = subtitleRegex.findAll(subtitleSection)
 
             for (subtitleMatch in subtitleMatches) {

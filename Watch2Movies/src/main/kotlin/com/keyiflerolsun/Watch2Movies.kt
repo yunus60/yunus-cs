@@ -15,8 +15,6 @@ class Watch2Movies : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "en"
     override val hasQuickSearch       = false
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Movie)
 
     override val mainPage = mainPageOf(
@@ -122,13 +120,13 @@ class Watch2Movies : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("W2M", "data » ${data}")
+        Log.d("W2M", "data » $data")
         val epId     = data.split("-").last()
         val document = app.get("${mainUrl}/ajax/episode/list/${epId}", referer=data).document
 
         document.select("li.nav-item a").forEach {
             val dataId     = it.attr("data-linkid")
-            Log.d("W2M", "dataId » ${dataId}")
+            Log.d("W2M", "dataId » $dataId")
             loadExtractor("${data}.${dataId}", "${mainUrl}/", subtitleCallback, callback)
 
             // val dataSource = app.get("${mainUrl}/ajax/episode/sources/${dataId}", referer=data).parsedSafe<Sources>()

@@ -15,8 +15,6 @@ class IzleAI : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "tr"
     override val hasQuickSearch       = true
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Movie)
 
     // ! CloudFlare bypass
@@ -47,7 +45,7 @@ class IzleAI : MainAPI() {
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        val document = app.get("${request.data}").document
+        val document = app.get(request.data).document
         val home     = document.select("a.ambilight").mapNotNull { it.toSearchResult() }
 
         return newHomePageResponse(request.name, home)
@@ -124,7 +122,7 @@ class IzleAI : MainAPI() {
         val description = document.selectFirst("div.mv-det-p")?.text()?.trim() ?: document.selectFirst("div.w-full div.text-base")?.text()?.trim()
         val tags        = document.select("[href*='kategori']").map { it.text() }
         val rating      = document.selectFirst("a[href*='imdb.com'] span.font-bold")?.text()?.trim().toRatingInt()
-        val duration    = document.selectXpath("//span[contains(text(), ' dk.')]")?.text()?.trim()?.split(" ")?.first()?.toIntOrNull()
+        val duration    = document.selectXpath("//span[contains(text(), ' dk.')]").text().trim().split(" ").first().toIntOrNull()
         val trailer     = document.selectFirst("iframe[data-src*='youtube.com/embed/']")?.attr("data-src")
         val actors      = document.select("div.flex.overflow-auto [href*='oyuncu']").map {
             Actor(it.selectFirst("span span")!!.text(), it.selectFirst("img")?.attr("data-srcset")?.split(" ")?.first())
@@ -143,10 +141,10 @@ class IzleAI : MainAPI() {
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("IAI", "data » ${data}")
+        Log.d("IAI", "data » $data")
         val document = app.get(data).document
-        var iframe   = fixUrlNull(document.selectFirst("div.player iframe")?.attr("src")) ?: return false
-        Log.d("IAI", "iframe » ${iframe}")
+        val iframe   = fixUrlNull(document.selectFirst("div.player iframe")?.attr("src")) ?: return false
+        Log.d("IAI", "iframe » $iframe")
 
         loadExtractor(iframe, "${mainUrl}/", subtitleCallback, callback)
 

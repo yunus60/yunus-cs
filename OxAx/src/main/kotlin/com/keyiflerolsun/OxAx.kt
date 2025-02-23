@@ -14,7 +14,6 @@ class OxAx : MainAPI() {
     override var lang                 = "ru"
     override val hasQuickSearch       = true
     override val hasDownloadSupport   = false
-    override val hasChromecastSupport = true
     override val supportedTypes       = setOf(TvType.NSFW, TvType.Live)
     override val vpnStatus            = VPNStatus.MightBeNeeded
 
@@ -25,15 +24,11 @@ class OxAx : MainAPI() {
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        val channels = app.get("${request.data}").parsedSafe<KekikAPI>()!!.channels.map { channel ->
-            LiveSearchResponse(
-                name      = channel.detail.title,
-                url       = "http://oxax.tv/${channel.slug}.html",
-                apiName   = this@OxAx.name,
-                type      = TvType.Live,
-                posterUrl = channel.detail.img,
-                lang      = "RU"
-            )
+        val channels = app.get(request.data).parsedSafe<KekikAPI>()!!.channels.map { channel ->
+            newLiveSearchResponse(channel.detail.title, "http://oxax.tv/${channel.slug}.html", TvType.Live) {
+                this.posterUrl = channel.detail.img
+                this.lang = "RU"
+            }
         }
 
         return newHomePageResponse(
@@ -44,36 +39,28 @@ class OxAx : MainAPI() {
 
     override suspend fun search(query: String): List<SearchResponse> {
         return app.get("${mainUrl}/search/${query}").parsedSafe<KekikAPI>()!!.channels.map { channel ->
-            LiveSearchResponse(
-                name      = channel.detail.title,
-                url       = "http://oxax.tv/${channel.slug}.html",
-                apiName   = this@OxAx.name,
-                type      = TvType.Live,
-                posterUrl = channel.detail.img,
-                lang      = "RU"
-            )
+            newLiveSearchResponse(channel.detail.title, "http://oxax.tv/${channel.slug}.html", TvType.Live) {
+                this.posterUrl = channel.detail.img
+                this.lang = "RU"
+            }
         }
     }
 
     override suspend fun quickSearch(query: String): List<SearchResponse> = search(query)
 
-    override suspend fun load(url: String): LoadResponse? {
+    override suspend fun load(url: String): LoadResponse {
         val slug   = url.split("/").last().substringBefore(".html")
         val detail = app.get("${mainUrl}/detail/${slug}").parsedSafe<Detail>()!!
 
-        return LiveStreamLoadResponse(
-            name      = detail.title,
-            url       = url,
-            apiName   = this.name,
-            dataUrl   = url,
-            posterUrl = detail.img,
-            plot      = "⚠️🔞🔞🔞 » ${detail.title} « 🔞🔞🔞⚠️",
-            tags      = detail.tags,
-        )
+        return newLiveStreamLoadResponse(detail.title, url, url) {
+            this.posterUrl = detail.img
+            this.plot      = "⚠️🔞🔞🔞 » ${detail.title} « 🔞🔞🔞⚠️"
+            this.tags = detail.tags
+        }
     }
 
     override suspend fun loadLinks(data: String, isCasting: Boolean, subtitleCallback: (SubtitleFile) -> Unit, callback: (ExtractorLink) -> Unit): Boolean {
-        Log.d("XOX", "data » ${data}")
+        Log.d("XOX", "data » $data")
 
         loadExtractor(data, "${mainUrl}/", subtitleCallback, callback)
 
