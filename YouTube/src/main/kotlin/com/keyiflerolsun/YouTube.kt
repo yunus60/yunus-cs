@@ -12,8 +12,6 @@ class YouTube : MainAPI() {
     override var name                 = "YouTube"
     override val hasMainPage          = true
     override var lang                 = "tr"
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Others)
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {

@@ -22,8 +22,6 @@ class NetflixMirror : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "hi"
     override val hasQuickSearch       = false
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.Movie, TvType.TvSeries)
 
     private var cookieValue = ""

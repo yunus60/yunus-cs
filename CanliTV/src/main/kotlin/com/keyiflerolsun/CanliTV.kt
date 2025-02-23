@@ -15,7 +15,6 @@ class CanliTV : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "tr"
     override val hasQuickSearch       = true
-    override val hasChromecastSupport = true
     override val hasDownloadSupport   = false
     override val supportedTypes       = setOf(TvType.Live)
 

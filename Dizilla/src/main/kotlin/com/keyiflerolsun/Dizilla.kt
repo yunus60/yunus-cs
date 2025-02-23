@@ -14,8 +14,6 @@ class Dizilla : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "tr"
     override val hasQuickSearch       = true
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.TvSeries)
 
     // ! CloudFlare bypass

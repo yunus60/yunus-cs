@@ -16,8 +16,6 @@ class DiziKorea : MainAPI() {
     override val hasMainPage          = true
     override var lang                 = "tr"
     override val hasQuickSearch       = true
-    override val hasChromecastSupport = true
-    override val hasDownloadSupport   = true
     override val supportedTypes       = setOf(TvType.AsianDrama)
 
     override val mainPage = mainPageOf(

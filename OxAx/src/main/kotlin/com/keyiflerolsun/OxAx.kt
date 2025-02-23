@@ -14,7 +14,6 @@ class OxAx : MainAPI() {
     override var lang                 = "ru"
     override val hasQuickSearch       = true
     override val hasDownloadSupport   = false
-    override val hasChromecastSupport = true
     override val supportedTypes       = setOf(TvType.NSFW, TvType.Live)
     override val vpnStatus            = VPNStatus.MightBeNeeded
 
