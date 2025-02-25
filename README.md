@@ -60,7 +60,7 @@ _CloudStream için Türkçe yayın yapan sitelere ait eklentiler_
 
 ## 💻 Katkı Sağlayanlar
 <a href="https://github.com/keyiflerolsun/Kekik-cloudstream/graphs/contributors?selectedMetric=additions" target="_blank">
-  <img src="https://contrib.rocks/image?repo=keyiflerolsun/Kekik-cloudstream" />
+  <img src="https://stg.contrib.rocks/image?repo=keyiflerolsun/Kekik-cloudstream" />
 </a>
 
 ***
