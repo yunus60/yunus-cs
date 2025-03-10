@@ -1,0 +1,3 @@
+[submodule "DDizi"]
+	path = DDizi
+	url = https://github.com/yunus60/ddizi-cs.git
