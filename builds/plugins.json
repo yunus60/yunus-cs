@@ -3,7 +3,7 @@
   "description": "DDizi.im için CloudStream eklentisi",
   "version": 1,
   "repositoryUrl": "https://github.com/yunus60/ddizi-cs",
-  "fileUrl": "https://raw.githubusercontent.com/yunus60/yunus-cs/builds/DDizi.cs3",
+  "fileUrl": "https://raw.githubusercontent.com/yunus60/yunus-cs/master/builds/DDizi.cs3",
   "status": 1,
   "language": "tr",
   "authors": ["keyiflerolsun"]
