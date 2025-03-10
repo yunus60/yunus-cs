@@ -1,10 +1,22 @@
+[
 {
-  "name": "DDizi",
-  "description": "DDizi.im için CloudStream eklentisi",
-  "version": 1,
-  "repositoryUrl": "https://github.com/yunus60/ddizi-cs",
-  "fileUrl": "https://raw.githubusercontent.com/yunus60/yunus-cs/master/builds/DDizi.cs3",
+  "iconUrl": "https://www.google.com/s2/favicons?domain=animecix.net&sz=%size%",
+  "apiVersion": 1,
+  "repositoryUrl": "https://github.com/yunus60/yunus-cs",
+  "fileSize": 21262,
   "status": 1,
   "language": "tr",
-  "authors": ["keyiflerolsun"]
-} 
+  "authors": [
+      "yunus60"
+  ],
+  "tvTypes": [
+      "Anime",
+      "TvSeries"
+  ],
+  "version": 7,
+  "internalName": "DDizi",
+  "description": "DDizi.im için CloudStream eklentisi",
+  "url": "https://raw.githubusercontent.com/yunus60/yunus-cs/master/builds/DDizi.cs3",
+  "name": "DDizi"
+}
+]
