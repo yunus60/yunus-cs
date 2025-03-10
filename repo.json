@@ -1,8 +1,8 @@
 {
-    "name": "Turkish Providers Repository | @KekikAkademi",
-    "description": "Türkçe içerikli eklenti havuzu",
+    "name": "DDizi Repository",
+    "description": "DDizi.im için CloudStream eklentisi",
     "manifestVersion": 1,
     "pluginLists": [
-      "https://raw.githubusercontent.com/keyiflerolsun/Kekik-cloudstream/builds/plugins.json"
+        "https://raw.githubusercontent.com/yunus60/ddizi-cs/main/build/DDizi.cs3"
     ]
 }
