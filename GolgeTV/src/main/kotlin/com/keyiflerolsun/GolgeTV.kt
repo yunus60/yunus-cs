@@ -15,17 +15,15 @@ import com.lagradost.cloudstream3.newLiveSearchResponse
 import com.lagradost.cloudstream3.newLiveStreamLoadResponse
 import com.lagradost.cloudstream3.utils.AppUtils
 import com.lagradost.cloudstream3.utils.ExtractorLink
-import com.lagradost.cloudstream3.utils.ExtractorLinkType
 import com.lagradost.cloudstream3.utils.Qualities
+import com.lagradost.cloudstream3.utils.loadExtractor
 
-//TODO: iframe & m3u
 class GolgeTV : MainAPI() {
     override var name = "GolgeTV"
     override val hasMainPage = true
     override var lang = "tr"
-    override val hasQuickSearch = true
-    override val supportedTypes = setOf(TvType.Movie, TvType.TvSeries, TvType.Live)
-    override var sequentialMainPage = false
+    override val supportedTypes = setOf(TvType.Live)
+
     override val mainPage = mainPageOf(
         "https://panel2.cloudgolge.shop/appMainGetData.php" to "ULUSAL",
         "https://panel2.cloudgolge.shop/appMainGetData.php" to "SPOR",
@@ -34,10 +32,6 @@ class GolgeTV : MainAPI() {
         "https://panel2.cloudgolge.shop/appMainGetData.php" to "SİNEMA",
         "https://panel2.cloudgolge.shop/appMainGetData.php" to "ÇOCUK",
         "https://panel2.cloudgolge.shop/appMainGetData.php" to "MÜZİK",
-        "https://panel2.cloudgolge.shop/appMainGetData.php" to "WORLD",
-        // "https://panel2.cloudgolge.shop/appMainGetData.php" to "PANELLER",
-        // "https://panel2.cloudgolge.shop/appMainGetData.php" to "FİLMLER",
-        // "https://panel2.cloudgolge.shop/appMainGetData.php" to "DİZİLER",
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
@@ -51,15 +45,19 @@ class GolgeTV : MainAPI() {
                 "ormoxRoks" to "D8C42BC6CD20C00E85659003F62B1F4A7A882DCB",
                 "ormxArmegedEryxc" to "",
                 "uuid" to "9717237692aa18b2",
-                "asize" to "oZT%2BZxn8zjH8LOwj%2FUwiYA%3D%3D", // TODO: don't forget to url encode
+                "asize" to "oZT%2BZxn8zjH8LOwj%2FUwiYA%3D%3D",
                 "serverurl" to "https://raw.githubusercontent.com/sevdaliyim/sevdaliyim/refs/heads/main/ssl2.key",
                 "glg1Key" to "1FbcLGctAooQU7L6LQ2YaDtpNHNryPGMde7wUd47Jc53lOikXegk4LKREvfKqZYk"
             )
         )
 
         val contents = mutableListOf<SearchResponse>()
-        AppUtils.tryParseJson<Resp>(home.text)!!.ormoxChnlx
-            .filter { it.kategori == request.name }
+        AppUtils.tryParseJson<MainPageResp>(home.text)!!.ormoxChnlx
+            .filter {
+                if (it.kategori != request.name || it.player == "m3u") return@filter false
+                if (it.player == "iframe" && !it.link.contains("golge")) return@filter false
+                return@filter true
+            }
             .forEach {
                 val toDict = jacksonObjectMapper().writeValueAsString(it)
                 contents.add(newLiveSearchResponse(it.isim, toDict, TvType.Live) {
@@ -83,30 +81,36 @@ class GolgeTV : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         val content = AppUtils.tryParseJson<OrmoxChnlx>(data) ?: return false
-        if (content.player == "exo") {
-            var headers = mapOf(
-                content.h1Key to content.h1Val,
-                content.h2Key to content.h2Val,
-                content.h3Key to content.h3Val,
-                content.h4Key to content.h4Val,
-                content.h5Key to content.h5Val
-            )
-            headers = headers.filterKeys { it != "0" }
-            callback.invoke(
-                ExtractorLink(
-                    source = this.name,
-                    name = content.isim,
-                    url = content.link,
-                    referer = headers["Referer"] ?: "",
-                    quality = Qualities.Unknown.value,
-                    headers = headers,
-                    type = ExtractorLinkType.M3U8
-                )
-            )
-            return true
-        } else {
+        if (content.player == "iframe") {
+            val golgeMatch = Regex("^(golge(?:2|3|4|5|6|7|8|9|1[0-9])://).*").find(content.link)
+            if (golgeMatch != null) {
+                val (golgeProtocol) = golgeMatch.destructured
+                loadExtractor("$golgeProtocol||$data", subtitleCallback, callback)
+                return true
+            }
             return false
         }
+
+        var headers = mapOf(
+            content.h1Key to content.h1Val,
+            content.h2Key to content.h2Val,
+            content.h3Key to content.h3Val,
+            content.h4Key to content.h4Val,
+            content.h5Key to content.h5Val
+        )
+        headers = headers.filterKeys { it != "0" }
+        callback.invoke(
+            ExtractorLink(
+                source = this.name,
+                name = content.isim,
+                url = content.link,
+                referer = headers["Referer"] ?: "",
+                quality = Qualities.Unknown.value,
+                headers = headers,
+                isM3u8 = true
+            )
+        )
+        return true
     }
 }
 
