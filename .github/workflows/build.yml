@@ -1,0 +1,57 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        
+      - name: Build Plugin
+        run: |
+          chmod +x gradlew
+          ./gradlew :DDizi:make
+          mkdir -p builds
+          cp DDizi/build/DDizi.cs3 builds/
+          
+      - name: Generate Plugin JSON
+        run: |
+          echo '{
+            "name": "DDizi",
+            "description": "DDizi.im için CloudStream eklentisi",
+            "version": 1,
+            "repositoryUrl": "https://github.com/yunus60/ddizi-cs",
+            "fileUrl": "https://raw.githubusercontent.com/yunus60/ddizi-cs/builds/DDizi.cs3",
+            "status": 1,
+            "language": "tr",
+            "authors": ["keyiflerolsun"]
+          }' > builds/plugins.json
+          
+      - name: Push Builds
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git checkout --orphan builds
+          git rm -rf .
+          cp -r builds/* .
+          rm -rf builds
+          git add .
+          git commit -m "Build $GITHUB_SHA"
+          git push -f origin builds 

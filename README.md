@@ -66,3 +66,47 @@ _CloudStream için Türkçe yayın yapan sitelere ait eklentiler_
 ***
 
 > **[@KekikAkademi](https://t.me/KekikAkademi)** *için yazılmıştır..*
+
+# DDizi CloudStream Eklentisi
+
+Bu eklenti, [CloudStream](https://github.com/recloudstream/cloudstream) uygulaması için [DDizi.im](https://www.ddizi.im) sitesinden içerik izlemenizi sağlar.
+
+## Özellikler
+
+- Yerli ve yabancı dizileri izleme
+- Dizi arama
+- Bölüm listesi
+- Video player entegrasyonu
+- Chromecast desteği
+- İndirme desteği
+
+## Kurulum
+
+1. CloudStream uygulamasını açın
+2. Ayarlar > Eklentiler > Depo ekle
+3. Aşağıdaki URL'yi ekleyin:
+```
+https://raw.githubusercontent.com/[KULLANICI_ADI]/ddizi-cs/builds/repo.json
+```
+4. Depodan DDizi eklentisini yükleyin
+
+## Geliştirme
+
+1. Projeyi klonlayın:
+```bash
+git clone https://github.com/[KULLANICI_ADI]/ddizi-cs.git
+```
+
+2. Eklentiyi derleyin:
+```bash
+./gradlew :DDizi:make
+```
+
+3. Oluşan APK'yı CloudStream'e yükleyin:
+```bash
+adb install ./DDizi/build/outputs/apk/debug/DDizi-debug.apk
+```
+
+## Lisans
+
+Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için [LICENSE](LICENSE) dosyasına bakın.
