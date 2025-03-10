@@ -57,7 +57,6 @@ open class Golge19 : ExtractorApi() {
         val content2 = decrypt1[0]
         val key2 = Base64.decode(decrypt1[1], Base64.DEFAULT)
         val decrypt2 = decryptAES(content2, key2)
-        Log.d("GOLGE19", "decrypt2: $decrypt2")
         val (chUrl) = Regex(""""chUrl": "(.*?)"""").find(decrypt2)!!.destructured
         return chUrl
     }

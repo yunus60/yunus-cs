@@ -20,13 +20,13 @@ open class Golge16 : ExtractorApi() {
         subtitleCallback: (SubtitleFile) -> Unit,
         callback: (ExtractorLink) -> Unit
     ) {
-        Log.d("GOLGE16", "url: $url")
         val data = url.split("||")[1]
         val content = AppUtils.tryParseJson<OrmoxChnlx>(data)
             ?: throw ErrorLoadingException("can't parse json")
         val link = content.link.split(this.mainUrl)[1].split("%7C")[0]
         val firstResp = app.get(link).parsedSafe<Golge16FirstResponse>()
             ?: throw ErrorLoadingException("can't reach url")
+
         val headers = mapOf(
             "User-Agent" to firstResp.headers.userAgent,
             "Referer" to firstResp.headers.referer,
@@ -35,9 +35,9 @@ open class Golge16 : ExtractorApi() {
             "X-Forwarded-For" to firstResp.headers.xForwardedFor,
             "Content-Type" to firstResp.headers.contentType,
         )
-        Log.d("GOLGE16", "jsonData: ${firstResp.jsonData}")
         val secondResp = app.post(firstResp.apiUrl, headers = headers, json = firstResp.jsonData)
             .parsedSafe<Golge16SecondResponse>() ?: throw ErrorLoadingException("can't reach url")
+
         val secondHeaders = mapOf(
             "watched-sig" to secondResp.addonSig,
             "mediahubmx-signature" to secondResp.addonSig,

@@ -12,8 +12,6 @@ import com.lagradost.cloudstream3.utils.Qualities
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-
-@Suppress("unused")
 open class Golge17 : ExtractorApi() {
     override val name = "Golge17"
     override val mainUrl = "golge17://"
