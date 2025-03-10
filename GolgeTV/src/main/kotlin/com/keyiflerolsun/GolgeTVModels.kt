@@ -1,13 +1,11 @@
 package com.keyiflerolsun
 
-data class Resp(
-    val icerikler: List<Any?>,
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class MainPageResp(
     val ormoxChnlx: List<OrmoxChnlx>,
-    val menuPaylas: String,
-    val menuInstagram: String,
-    val menuTelegram: String,
-    val onlineTime: String,
-    val onlineDurum: String,
 )
 
 data class OrmoxChnlx(
@@ -29,4 +27,32 @@ data class OrmoxChnlx(
     val h4Val: String,
     val h5Key: String,
     val h5Val: String,
+)
+
+data class Golge16FirstResponse(
+    @JsonProperty("api_url")
+    val apiUrl: String,
+    val medyaurl: String,
+    val proxyurl: String,
+    val headers: Headers,
+    @JsonProperty("json_data")
+    val jsonData: Any,
+)
+
+data class Headers(
+    @JsonProperty("user-agent")
+    val userAgent: String,
+    val referer: String,
+    val origin: String,
+    @JsonProperty("x-requested-with")
+    val xRequestedWith: String,
+    @JsonProperty("x-forwarded-for")
+    val xForwardedFor: String,
+    @JsonProperty("content-type")
+    val contentType: String,
+)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class Golge16SecondResponse(
+    val addonSig: String,
 )
